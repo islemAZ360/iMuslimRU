@@ -1,0 +1,168 @@
+/* ========================================
+   Login Page — Premium Styles
+   ======================================== */
+
+.loginPage {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100dvh;
+    padding: var(--space-6);
+    position: relative;
+    overflow: hidden;
+}
+
+/* Decorative background orbs */
+.loginPage::before {
+    content: '';
+    position: absolute;
+    top: -20%;
+    left: -10%;
+    width: 60vw;
+    height: 60vw;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(16, 185, 129, 0.15) 0%, transparent 70%);
+    animation: floatOrb1 12s ease-in-out infinite;
+    pointer-events: none;
+}
+
+.loginPage::after {
+    content: '';
+    position: absolute;
+    bottom: -15%;
+    right: -10%;
+    width: 50vw;
+    height: 50vw;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(251, 191, 36, 0.08) 0%, transparent 70%);
+    animation: floatOrb1 15s ease-in-out infinite reverse;
+    pointer-events: none;
+}
+
+.loginContainer {
+    width: 100%;
+    max-width: 400px;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-5);
+    position: relative;
+    z-index: 1;
+    animation: slideUp 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* ---- Logo ---- */
+.logo {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-3);
+    margin-bottom: var(--space-6);
+    animation: slideUp 0.8s ease forwards;
+}
+
+.logoIcon {
+    font-size: 4rem;
+    filter: drop-shadow(0 0 20px rgba(16, 185, 129, 0.4));
+    animation: float 3s ease-in-out infinite, glowPulse 4s ease-in-out infinite;
+}
+
+.logoText {
+    font-size: var(--font-size-4xl) !important;
+    font-weight: 900 !important;
+    background: linear-gradient(135deg, #10b981, #34d399, #6ee7b7, #34d399, #10b981);
+    background-size: 400% 100%;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    letter-spacing: -0.04em;
+    line-height: 1;
+    animation: gradient-shift 5s ease infinite;
+}
+
+.logoTagline {
+    font-size: var(--font-size-sm);
+    color: var(--text-tertiary);
+    text-align: center;
+}
+
+/* ---- Google Button ---- */
+.googleBtn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-3);
+    width: 100%;
+    padding: var(--space-4);
+    background: var(--bg-card);
+    backdrop-filter: blur(20px) saturate(180%);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-xl);
+    color: var(--text-primary);
+    font-family: var(--font-main);
+    font-size: var(--font-size-base);
+    font-weight: 600;
+    cursor: pointer;
+    transition: all var(--transition-spring);
+    animation: bounceIn 0.7s cubic-bezier(0.34, 1.56, 0.64, 1) 0.3s both;
+}
+
+.googleBtn:hover {
+    border-color: var(--border-glow);
+    box-shadow: var(--shadow-glow-strong);
+    transform: translateY(-3px) scale(1.02);
+}
+
+.googleBtn:active {
+    transform: scale(0.95);
+    transition: transform 0.1s ease;
+}
+
+/* ---- Divider ---- */
+.divider {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    color: var(--text-muted);
+    font-size: var(--font-size-sm);
+}
+
+.divider::before,
+.divider::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--border-glow), transparent);
+    animation: shineSlide 5s ease-in-out infinite;
+}
+
+/* ---- Form ---- */
+.form {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+}
+
+/* ---- Toggle Between Login/Register ---- */
+.toggleText {
+    text-align: center;
+    font-size: var(--font-size-sm);
+    color: var(--text-tertiary);
+}
+
+.toggleBtn {
+    background: none;
+    border: none;
+    color: var(--primary-400);
+    font-family: var(--font-main);
+    font-size: var(--font-size-sm);
+    font-weight: 700;
+    cursor: pointer;
+    text-decoration: underline;
+    text-decoration-style: dotted;
+    text-underline-offset: 3px;
+    transition: color var(--transition-fast);
+}
+
+.toggleBtn:hover {
+    color: var(--primary-300);
+}

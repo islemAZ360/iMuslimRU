@@ -1,0 +1,308 @@
+/* ========================================
+   Prayer Page — Premium Styles v3
+   ======================================== */
+
+.title {
+    font-size: var(--font-size-3xl);
+    font-weight: 900;
+    margin-bottom: var(--space-5);
+    background: linear-gradient(135deg, #10b981, #34d399, #6ee7b7, #34d399, #10b981);
+    background-size: 400% 100%;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    letter-spacing: -0.04em;
+    text-align: center;
+    animation: fadeIn 0.4s ease, gradient-shift 6s ease infinite;
+}
+
+/* ---- Tabs ---- */
+.tabs {
+    display: flex;
+    gap: 4px;
+    margin-bottom: var(--space-5);
+    background: var(--bg-card);
+    border-radius: var(--radius-xl);
+    padding: 4px;
+    border: 1px solid var(--border-color);
+    backdrop-filter: blur(20px);
+    box-shadow: var(--shadow-sm);
+}
+
+.tab {
+    flex: 1;
+    padding: 10px;
+    background: none;
+    border: none;
+    border-radius: var(--radius-lg);
+    font-family: var(--font-main);
+    font-size: var(--font-size-sm);
+    font-weight: 700;
+    color: var(--text-tertiary);
+    cursor: pointer;
+    transition: all var(--transition-base);
+}
+
+.tab:hover {
+    color: var(--text-secondary);
+}
+
+.tabActive {
+    background: var(--gradient-accent);
+    color: #fff;
+    box-shadow: 0 2px 12px rgba(16, 185, 129, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.15);
+    animation: scaleIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* ---- Location ---- */
+.locationPrompt {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    min-height: 60vh;
+    gap: var(--space-4);
+}
+
+.locationIcon {
+    font-size: 3.5rem;
+    animation: float 3s ease-in-out infinite;
+    filter: drop-shadow(0 0 16px rgba(16, 185, 129, 0.3));
+}
+
+/* ---- Next Prayer Card ---- */
+.nextPrayerCard {
+    text-align: center;
+    padding: var(--space-6);
+    border-radius: var(--radius-2xl);
+    background: var(--gradient-card);
+    backdrop-filter: blur(40px) saturate(180%);
+    border: 1px solid var(--border-color);
+    margin-bottom: var(--space-5);
+    position: relative;
+    overflow: hidden;
+    animation: slideUp 0.4s ease forwards;
+    box-shadow: var(--shadow-card);
+}
+
+.nextPrayerCard::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(16, 185, 129, 0.25), transparent);
+}
+
+.nextPrayerCard::after {
+    content: '';
+    position: absolute;
+    top: -40%;
+    left: -30%;
+    width: 160%;
+    height: 160%;
+    background: radial-gradient(ellipse, rgba(16, 185, 129, 0.06) 0%, transparent 60%);
+    pointer-events: none;
+    animation: breathe 6s ease-in-out infinite;
+}
+
+.nextLabel {
+    font-size: 0.6rem;
+    color: var(--text-tertiary);
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    font-weight: 800;
+    position: relative;
+    z-index: 1;
+}
+
+.nextName {
+    font-size: var(--font-size-3xl);
+    font-weight: 900;
+    background: linear-gradient(135deg, #10b981, #34d399, #6ee7b7, #34d399, #10b981);
+    background-size: 400% 100%;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin: 4px 0;
+    position: relative;
+    z-index: 1;
+    animation: gradient-shift 4s ease infinite;
+}
+
+.nextTime {
+    font-size: var(--font-size-lg);
+    color: var(--text-secondary);
+    font-weight: 300;
+    position: relative;
+    z-index: 1;
+}
+
+.countdown {
+    margin-top: var(--space-4);
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    position: relative;
+    z-index: 1;
+}
+
+.countdownLabel {
+    font-size: 0.6rem;
+    color: var(--text-tertiary);
+    font-weight: 600;
+}
+
+.countdownValue {
+    font-size: var(--font-size-2xl);
+    font-weight: 800;
+    background: linear-gradient(135deg, #10b981, #34d399, #6ee7b7, #34d399, #10b981);
+    background-size: 400% 100%;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 0.08em;
+    animation: gradient-shift 4s ease infinite;
+}
+
+/* ---- Prayer List ---- */
+.prayerList {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.prayerItem {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 16px;
+    border-radius: var(--radius-xl);
+    background: var(--bg-card);
+    backdrop-filter: blur(16px);
+    border: 1px solid var(--border-color);
+    transition: all var(--transition-spring);
+    box-shadow: var(--shadow-sm);
+}
+
+.prayerItem:nth-child(1) {
+    animation-delay: 0.05s;
+}
+
+.prayerItem:nth-child(2) {
+    animation-delay: 0.1s;
+}
+
+.prayerItem:nth-child(3) {
+    animation-delay: 0.15s;
+}
+
+.prayerItem:nth-child(4) {
+    animation-delay: 0.2s;
+}
+
+.prayerItem:nth-child(5) {
+    animation-delay: 0.25s;
+}
+
+.prayerItem:nth-child(6) {
+    animation-delay: 0.3s;
+}
+
+.prayerItem:hover {
+    border-color: var(--border-glow);
+    transform: translateX(6px) scale(1.02);
+    box-shadow: var(--shadow-card), var(--shadow-glow);
+}
+
+[dir='rtl'] .prayerItem:hover {
+    transform: translateX(-6px) scale(1.02);
+}
+
+.prayerItemActive {
+    border-color: rgba(16, 185, 129, 0.35);
+    background: rgba(16, 185, 129, 0.08);
+    box-shadow: 0 0 16px rgba(16, 185, 129, 0.1);
+    animation: pulse-glow 4s ease-in-out infinite, slideInRight 0.4s ease forwards;
+}
+
+.prayerLeft {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.prayerEmoji {
+    font-size: 1.1rem;
+}
+
+.prayerName {
+    font-weight: 800;
+    color: var(--text-primary);
+    font-size: var(--font-size-sm);
+}
+
+.prayerTime {
+    font-size: var(--font-size-base);
+    font-weight: 700;
+    color: var(--primary-400);
+    font-variant-numeric: tabular-nums;
+}
+
+/* ---- Qibla ---- */
+.qiblaSection {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-5);
+    animation: fadeIn 0.5s ease;
+}
+
+.compassContainer {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: var(--space-6);
+}
+
+.compass {
+    position: relative;
+    width: 240px;
+    height: 240px;
+    transition: transform 0.3s ease;
+    filter: drop-shadow(0 0 24px rgba(16, 185, 129, 0.2));
+    animation: gentleBob 5s ease-in-out infinite;
+}
+
+.compassSvg {
+    width: 100%;
+    height: 100%;
+}
+
+.qiblaNeedle {
+    position: absolute;
+    top: 5%;
+    left: 50%;
+    width: 2px;
+    height: 45%;
+    transform-origin: bottom center;
+    margin-left: -1px;
+}
+
+.needleTip {
+    font-size: 1.8rem;
+    text-align: center;
+    transform: translateX(-50%);
+    filter: drop-shadow(0 0 10px rgba(16, 185, 129, 0.5));
+    animation: glowPulse 3s ease-in-out infinite;
+}
+
+.qiblaInfo {
+    text-align: center;
+    color: var(--text-secondary);
+    font-size: var(--font-size-base);
+    font-weight: 600;
+}

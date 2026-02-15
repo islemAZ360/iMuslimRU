@@ -1,0 +1,141 @@
+[
+    {
+        "barcode": "4607065560010",
+        "name": "Молоко Домик в деревне 3.2%",
+        "nameEn": "Domik v Derevne Milk 3.2%",
+        "manufacturer": "ВБД/PepsiCo",
+        "ingredients": [
+            "молоко нормализованное"
+        ],
+        "halalStatus": "halal",
+        "haramIngredients": [],
+        "boycottStatus": true,
+        "boycottReason": "PepsiCo — входит в список бойкота"
+    },
+    {
+        "barcode": "4600494000019",
+        "name": "Coca-Cola 0.5л",
+        "nameEn": "Coca-Cola 0.5L",
+        "manufacturer": "The Coca-Cola Company",
+        "ingredients": [
+            "вода",
+            "сахар",
+            "углекислый газ",
+            "краситель карамельный",
+            "регулятор кислотности",
+            "кофеин"
+        ],
+        "halalStatus": "halal",
+        "haramIngredients": [],
+        "boycottStatus": true,
+        "boycottReason": "The Coca-Cola Company — входит в список бойкота"
+    },
+    {
+        "barcode": "4607025392408",
+        "name": "Шоколад Алёнка молочный",
+        "nameEn": "Alyonka Milk Chocolate",
+        "manufacturer": "Красный Октябрь",
+        "ingredients": [
+            "сахар",
+            "какао масло",
+            "молоко сухое",
+            "какао тёртое",
+            "эмульгатор лецитин E322",
+            "ароматизатор ванилин"
+        ],
+        "halalStatus": "doubtful",
+        "haramIngredients": [
+            "E322 (лецитин — может быть животного происхождения)"
+        ],
+        "boycottStatus": false,
+        "boycottReason": ""
+    },
+    {
+        "barcode": "4607003040703",
+        "name": "Сок Добрый яблочный",
+        "nameEn": "Dobry Apple Juice",
+        "manufacturer": "Мултон/Coca-Cola",
+        "ingredients": [
+            "яблочный сок восстановленный",
+            "вода"
+        ],
+        "halalStatus": "halal",
+        "haramIngredients": [],
+        "boycottStatus": true,
+        "boycottReason": "Мултон — дочерняя компания Coca-Cola, входит в список бойкота"
+    },
+    {
+        "barcode": "4602000000001",
+        "name": "Лапша Доширак курица",
+        "nameEn": "Doshirak Chicken Noodles",
+        "manufacturer": "Доширак Коя",
+        "ingredients": [
+            "мука пшеничная",
+            "масло пальмовое",
+            "крахмал",
+            "соль",
+            "усилитель вкуса E621",
+            "E627",
+            "E631"
+        ],
+        "halalStatus": "doubtful",
+        "haramIngredients": [
+            "E627, E631 — возможно животного происхождения"
+        ],
+        "boycottStatus": false,
+        "boycottReason": ""
+    },
+    {
+        "barcode": "4690363004409",
+        "name": "Конфеты Рафаэлло",
+        "nameEn": "Raffaello Confections",
+        "manufacturer": "Ferrero",
+        "ingredients": [
+            "кокосовая стружка",
+            "масло растительное",
+            "сахар",
+            "миндаль",
+            "молоко сухое обезжиренное",
+            "мука пшеничная",
+            "эмульгатор лецитин соевый",
+            "ароматизатор ванилин"
+        ],
+        "halalStatus": "halal",
+        "haramIngredients": [],
+        "boycottStatus": false,
+        "boycottReason": ""
+    },
+    {
+        "barcode": "5000159484695",
+        "name": "Nesquik какао-напиток",
+        "nameEn": "Nesquik Cocoa Drink",
+        "manufacturer": "Nestlé",
+        "ingredients": [
+            "сахар",
+            "какао-порошок",
+            "витамины",
+            "минералы",
+            "эмульгатор лецитин соевый",
+            "корица",
+            "ароматизатор ваниль"
+        ],
+        "halalStatus": "halal",
+        "haramIngredients": [],
+        "boycottStatus": true,
+        "boycottReason": "Nestlé — входит в список бойкота"
+    },
+    {
+        "barcode": "4607065560027",
+        "name": "Кефир Домик в деревне 1%",
+        "nameEn": "Domik v Derevne Kefir 1%",
+        "manufacturer": "ВБД/PepsiCo",
+        "ingredients": [
+            "молоко нормализованное",
+            "закваска кефирная"
+        ],
+        "halalStatus": "halal",
+        "haramIngredients": [],
+        "boycottStatus": true,
+        "boycottReason": "PepsiCo — входит в список бойкота"
+    }
+]

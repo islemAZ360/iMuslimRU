@@ -1,0 +1,199 @@
+.overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 5000;
+    padding: var(--space-4);
+    animation: fadeIn 0.4s ease;
+}
+
+.wizard {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color-strong);
+    border-radius: var(--radius-3xl);
+    width: 100%;
+    max-width: 440px;
+    max-height: 90vh;
+    overflow-y: auto;
+    padding: var(--space-6);
+    box-shadow: var(--shadow-xl), 0 0 60px rgba(16, 185, 129, 0.1);
+    position: relative;
+}
+
+/* ---- Progress ---- */
+.progressContainer {
+    height: 4px;
+    background: var(--bg-tertiary);
+    border-radius: var(--radius-full);
+    margin-bottom: var(--space-4);
+    overflow: hidden;
+}
+
+.progressBar {
+    height: 100%;
+    background: var(--gradient-accent);
+    border-radius: var(--radius-full);
+    transition: width 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+    box-shadow: 0 0 8px rgba(16, 185, 129, 0.4);
+}
+
+.stepCounter {
+    text-align: center;
+    font-size: var(--font-size-sm);
+    color: var(--text-tertiary);
+    margin-bottom: var(--space-4);
+    font-weight: 500;
+}
+
+/* ---- Step Content ---- */
+.stepWrapper {
+    animation: fadeInScale 0.4s ease forwards;
+}
+
+.stepContent {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+}
+
+.stepIcon {
+    font-size: 3.5rem;
+    text-align: center;
+    filter: drop-shadow(0 4px 12px rgba(16, 185, 129, 0.3));
+    animation: float 3s ease-in-out infinite;
+}
+
+.readyIcon {
+    font-size: 4rem;
+    text-align: center;
+    animation: float 3s ease-in-out infinite;
+}
+
+.stepTitle {
+    text-align: center;
+    font-size: var(--font-size-2xl) !important;
+    letter-spacing: -0.03em;
+}
+
+.stepSubtitle {
+    text-align: center;
+    font-size: var(--font-size-sm);
+    color: var(--text-tertiary);
+}
+
+.formGroup {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+}
+
+.formGroup label {
+    font-size: var(--font-size-sm);
+    font-weight: 600;
+    color: var(--text-secondary);
+}
+
+.formRow {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--space-3);
+}
+
+/* ---- Chip Grid ---- */
+.chipGrid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+}
+
+.chip {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-1);
+    padding: var(--space-2) var(--space-3);
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-full);
+    font-family: var(--font-main);
+    font-size: var(--font-size-sm);
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.chip:hover {
+    border-color: var(--primary-500);
+}
+
+.chipActive {
+    background: rgba(16, 185, 129, 0.12);
+    border-color: var(--primary-500);
+    color: var(--primary-400);
+    box-shadow: 0 0 8px rgba(16, 185, 129, 0.15);
+}
+
+.chipActive button {
+    background: none;
+    border: none;
+    color: inherit;
+    cursor: pointer;
+    margin-left: var(--space-1);
+    font-size: 1.1em;
+}
+
+.customInput {
+    display: flex;
+    gap: var(--space-2);
+}
+
+.customInput .input {
+    flex: 1;
+}
+
+/* ---- Ready Summary ---- */
+.readySummary {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+    padding: var(--space-4);
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-xl);
+}
+
+.summaryItem {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    font-size: var(--font-size-sm);
+    color: var(--text-secondary);
+}
+
+/* ---- Navigation ---- */
+.navigation {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    margin-top: var(--space-6);
+}
+
+.navSpacer {
+    flex: 1;
+}
+
+@keyframes fadeInScale {
+    from {
+        opacity: 0;
+        transform: scale(0.94);
+    }
+
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
