@@ -11,7 +11,6 @@ export default function SettingsPage() {
     const { theme, setTheme } = useTheme();
     const { geminiApiKey, setGeminiApiKey, geminiModel, setGeminiModel } = useSettings();
     const [apiKeyInput, setApiKeyInput] = useState(geminiApiKey);
-    const [showKey, setShowKey] = useState(false);
     const [keySaved, setKeySaved] = useState(false);
 
     const handleSaveKey = () => {
@@ -76,20 +75,14 @@ export default function SettingsPage() {
                     <h3 className={styles.sectionTitle}>🤖 {t('settings.geminiApiKey')}</h3>
                     <p className={styles.sectionInfo}>{t('settings.apiKeyInfo')}</p>
                     <div className={styles.apiKeyInput}>
+                        {/* CHANGED: type is now 'text' permanently for visibility */}
                         <input
-                            type={showKey ? 'text' : 'password'}
+                            type="text"
                             className="input"
                             value={apiKeyInput}
                             onChange={(e) => setApiKeyInput(e.target.value)}
                             placeholder={t('settings.enterApiKey')}
                         />
-                        <button
-                            className="btn btn-icon btn-secondary"
-                            onClick={() => setShowKey(!showKey)}
-                            title={showKey ? 'Hide' : 'Show'}
-                        >
-                            {showKey ? '🙈' : '👁️'}
-                        </button>
                     </div>
                     <button
                         className="btn btn-primary btn-block"
@@ -126,7 +119,7 @@ export default function SettingsPage() {
                     <div className={styles.aboutInfo}>
                         <div className={styles.aboutItem}>
                             <span>{t('settings.version')}</span>
-                            <span className={styles.aboutValue}>1.0.0</span>
+                            <span className={styles.aboutValue}>1.0.1</span>
                         </div>
                         <div className={styles.aboutItem}>
                             <span>AI Model</span>

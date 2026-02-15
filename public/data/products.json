@@ -65,6 +65,15 @@
         "boycottReason": "Мултон — дочерняя компания Coca-Cola, входит в список бойкота"
     },
     {
+        "barcode": "80177173",
+        "name": "Nutella Hazelnut Spread",
+        "manufacturer": "Ferrero",
+        "halalStatus": "halal",
+        "haramIngredients": [],
+        "boycottStatus": false,
+        "boycottReason": null
+    },
+    {
         "barcode": "4602000000001",
         "name": "Лапша Доширак курица",
         "nameEn": "Doshirak Chicken Noodles",

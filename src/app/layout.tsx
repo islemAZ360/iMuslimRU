@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from 'next';
 import './globals.css';
 import ClientProviders from '@/components/ClientProviders';
+import { NoiseBackground } from '@/components/ui/noise-background';
 
 export const metadata: Metadata = {
   title: 'iMuslimRU — Ваш исламский спутник',
@@ -29,10 +30,17 @@ export default function RootLayout({
   return (
     <html lang="ru" dir="ltr" data-theme="dark" suppressHydrationWarning>
       <head>
-        <link rel="apple-touch-icon" href="/icons/icon-192x192.png" />
+
       </head>
       <body>
-        <ClientProviders>{children}</ClientProviders>
+        <ClientProviders>
+          <div className="relative min-h-screen">
+            <NoiseBackground containerClassName="fixed inset-0 pointer-events-none z-0" />
+            <div className="relative z-10">
+              {children}
+            </div>
+          </div>
+        </ClientProviders>
       </body>
     </html>
   );

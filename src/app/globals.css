@@ -1,3 +1,7 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
 /* ========================================
    iMuslimRU — Premium Design System v3.0
    Ultra-professional Islamic PWA

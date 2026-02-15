@@ -8,6 +8,7 @@ import { useSettings } from '@/contexts/SettingsContext';
 import { getPrayerTimes, formatTime, getNextPrayer, PrayerTimeResult } from '@/lib/prayer';
 import Onboarding from '@/components/Onboarding';
 import styles from './Home.module.css';
+import { HamsterLoader } from '@/components/ui/HamsterLoader';
 
 // Nawafil (Sunnah prayers) data
 const NAWAFIL_DATA = [
@@ -47,6 +48,7 @@ export default function HomePage() {
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [aiEnabled, setAiEnabled] = useState(false);
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
+  const [splashDone, setSplashDone] = useState(false);
 
   // Persist adhkar to localStorage
   const [adhkarCounter, setAdhkarCounter] = useState<number[]>(() => {
@@ -91,23 +93,31 @@ export default function HomePage() {
     return () => clearInterval(timer);
   }, []);
 
+  // Minimum splash screen duration
+  useEffect(() => {
+    const timer = setTimeout(() => setSplashDone(true), 3000);
+    return () => clearTimeout(timer);
+  }, []);
+
   // Prayer times — store location for getNextPrayer tomorrow calculation
   useEffect(() => {
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        const loc = { lat: pos.coords.latitude, lng: pos.coords.longitude };
-        setUserLocation(loc);
-        const times = getPrayerTimes(loc.lat, loc.lng);
-        setPrayerTimes(times);
-      },
-      () => {
-        // Default to Moscow
-        const loc = { lat: 55.7558, lng: 37.6173 };
-        setUserLocation(loc);
-        const times = getPrayerTimes(loc.lat, loc.lng);
-        setPrayerTimes(times);
-      }
-    );
+    if (typeof navigator !== 'undefined' && navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          const loc = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+          setUserLocation(loc);
+          const times = getPrayerTimes(loc.lat, loc.lng);
+          setPrayerTimes(times);
+        },
+        () => {
+          // Default to Moscow
+          const loc = { lat: 55.7558, lng: 37.6173 };
+          setUserLocation(loc);
+          const times = getPrayerTimes(loc.lat, loc.lng);
+          setPrayerTimes(times);
+        }
+      );
+    }
   }, []);
 
   // Next prayer countdown — pass lat/lng for tomorrow calculation
@@ -146,24 +156,13 @@ export default function HomePage() {
     }
   };
 
-  if (loading) {
+  if (loading || !splashDone) {
     return (
       <div className={styles.loadingScreen}>
-        <div className={styles.loadingLogo}>
-          <svg width="56" height="56" viewBox="0 0 100 100" className={styles.logoSvg}>
-            <defs>
-              <linearGradient id="moonGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" stopColor="#10b981" />
-                <stop offset="100%" stopColor="#34d399" />
-              </linearGradient>
-            </defs>
-            <path d="M50 10 C25 10, 10 35, 10 50 C10 75, 30 90, 50 90 C35 80, 30 65, 30 50 C30 35, 35 20, 50 10Z" fill="url(#moonGrad)" />
-            <circle cx="58" cy="22" r="3" fill="#fbbf24" opacity="0.9" />
-            <circle cx="70" cy="30" r="2" fill="#fbbf24" opacity="0.6" />
-          </svg>
-          <span className={styles.logoText}>iMuslimRU</span>
-        </div>
-        <div className="spinner spinner-lg" />
+        <HamsterLoader />
+        <p style={{ marginTop: '2rem', color: 'var(--text-secondary)', fontWeight: 500 }}>
+          {t('app.loading') || 'Loading...'}
+        </p>
       </div>
     );
   }

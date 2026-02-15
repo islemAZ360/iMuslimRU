@@ -15,19 +15,46 @@ export default function PrayerPage() {
     const [qiblaAngle, setQiblaAngle] = useState(0);
     const [compassHeading, setCompassHeading] = useState(0);
     const [locationError, setLocationError] = useState(false);
+    // Added loading state to prevent flash of empty content
+    const [loading, setLoading] = useState(true);
 
     const requestLocation = useCallback(() => {
+        // Try to load cached location first
+        const cached = localStorage.getItem('prayer_location');
+        if (cached) {
+            try {
+                const parsed = JSON.parse(cached);
+                if (parsed.lat && parsed.lng) {
+                    setLocation(parsed);
+                    setLoading(false); // Can show cached while updating
+                }
+            } catch (e) {
+                console.error('Failed to parse cached location');
+            }
+        }
+
         if (!navigator.geolocation) {
             setLocationError(true);
+            setLoading(false);
             return;
         }
+
         navigator.geolocation.getCurrentPosition(
             (pos) => {
-                setLocation({ lat: pos.coords.latitude, lng: pos.coords.longitude });
+                const newLoc = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+                setLocation(newLoc);
+                localStorage.setItem('prayer_location', JSON.stringify(newLoc));
                 setLocationError(false);
+                setLoading(false);
             },
-            () => setLocationError(true),
-            { enableHighAccuracy: true }
+            (err) => {
+                console.error('Geolocation error:', err);
+                if (!location) { // Only show error if no cached location
+                    setLocationError(true);
+                }
+                setLoading(false);
+            },
+            { enableHighAccuracy: true, timeout: 10000 }
         );
     }, []);
 
@@ -37,16 +64,24 @@ export default function PrayerPage() {
 
     useEffect(() => {
         if (!location) return;
-        const times = getPrayerTimes(location.lat, location.lng);
-        setPrayerTimes(times);
-        setQiblaAngle(getQiblaDirection(location.lat, location.lng));
 
-        const next = getNextPrayer(times, location.lat, location.lng);
-        setNextPrayer(next);
+        try {
+            const times = getPrayerTimes(location.lat, location.lng);
+            setPrayerTimes(times);
+            setQiblaAngle(getQiblaDirection(location.lat, location.lng));
+
+            const next = getNextPrayer(times, location.lat, location.lng);
+            setNextPrayer(next);
+        } catch (e) {
+            console.error('Error calculating prayer times:', e);
+        }
     }, [location]);
 
     useEffect(() => {
         if (!nextPrayer) return;
+        // Update immediately
+        setCountdown(getTimeRemaining(nextPrayer.time));
+
         const timer = setInterval(() => {
             setCountdown(getTimeRemaining(nextPrayer.time));
         }, 1000);
@@ -59,6 +94,11 @@ export default function PrayerPage() {
 
         const handleOrientation = (e: DeviceOrientationEvent) => {
             if (e.alpha !== null) {
+                // Invert alpha for CSS rotation (which is clockwise) vs compass heading
+                // But alpha is 0 at North and increases counter-clockwise on some devices?
+                // Standard: alpha 0 = North, increases counter-clockwise.
+                // CSS rotate: increases clockwise.
+                // So -alpha is correct.
                 setCompassHeading(e.alpha);
             }
         };
@@ -77,7 +117,16 @@ export default function PrayerPage() {
         return () => window.removeEventListener('deviceorientation', handleOrientation);
     }, [tab]);
 
-    if (locationError) {
+    if (loading && !location) {
+        return (
+            <div className="page-wrapper center-content">
+                <div className="spinner-large" />
+                <p style={{ marginTop: '1rem', color: 'var(--text-secondary)' }}>{t('prayer.locating') || 'Locating...'}</p>
+            </div>
+        );
+    }
+
+    if (locationError && !location) {
         return (
             <div className="page-wrapper">
                 <div className="container">
@@ -104,8 +153,6 @@ export default function PrayerPage() {
             { key: 'isha', label: t('prayer.isha'), time: prayerTimes.isha, emoji: '🌃' },
         ]
         : [];
-
-    const compassRotation = qiblaAngle - compassHeading;
 
     return (
         <div className="page-wrapper">
@@ -190,6 +237,9 @@ export default function PrayerPage() {
                         </div>
                         <div className={styles.qiblaInfo}>
                             <p>{t('prayer.qibla')}: {Math.round(qiblaAngle)}°</p>
+                            <p className="text-sm text-center mt-2 text-neutral-500">
+                                {t('prayer.compassInstruction') || 'Calibrate compass by moving phone in figure 8'}
+                            </p>
                         </div>
                     </div>
                 )}

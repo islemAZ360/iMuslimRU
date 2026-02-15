@@ -4,6 +4,7 @@ import React, { useState, useRef, useCallback } from 'react';
 import { useI18n } from '@/contexts/I18nContext';
 import { useSettings } from '@/contexts/SettingsContext';
 import { classicScan, aiScan, ScanResult } from '@/lib/scanner';
+import { GeneratingLoader } from '@/components/ui/GeneratingLoader';
 import styles from './Scanner.module.css';
 
 export default function ScannerPage() {
@@ -38,7 +39,14 @@ export default function ScannerPage() {
 
     const handlePhotoCapture = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
-        if (!file || !hasGeminiKey) return;
+        if (!file) return;
+
+        // If no key, maybe show alert? But user can still click just to test UI?
+        // Actually, without key AI scan fails.
+        if (!hasGeminiKey) {
+            alert(t('scanner.aiRequired') || 'AI Key required for photo analysis');
+            return;
+        }
 
         setScanning(true);
         setResult(null);
@@ -49,6 +57,8 @@ export default function ScannerPage() {
             setCapturedImage(reader.result as string);
 
             try {
+                // Auto switch to AI mode for photo
+                setMode('ai');
                 const res = await aiScan(geminiApiKey, '', base64, locale, geminiModel);
                 setResult(res);
             } catch (error) {
@@ -58,7 +68,7 @@ export default function ScannerPage() {
             }
         };
         reader.readAsDataURL(file);
-    }, [hasGeminiKey, geminiApiKey, locale, geminiModel]);
+    }, [hasGeminiKey, geminiApiKey, locale, geminiModel, t]);
 
     const getStatusBadge = (status: string) => {
         switch (status) {
@@ -120,33 +130,45 @@ export default function ScannerPage() {
                         </button>
                     </div>
 
-                    {/* Photo Capture (AI mode only) */}
-                    {mode === 'ai' && hasGeminiKey && (
-                        <div className={styles.photoSection}>
-                            <button
-                                className="btn btn-secondary btn-block"
-                                onClick={() => fileInputRef.current?.click()}
-                                disabled={scanning}
-                            >
-                                📷 {t('scanner.takePhoto')}
-                            </button>
-                            <input
-                                ref={fileInputRef}
-                                type="file"
-                                accept="image/*"
-                                capture="environment"
-                                onChange={handlePhotoCapture}
-                                style={{ display: 'none' }}
-                            />
-                        </div>
-                    )}
+                    {/* Photo Capture (Visible in all modes now) */}
+                    <div className={styles.photoSection}>
+                        <button
+                            className="btn btn-secondary btn-block"
+                            onClick={() => {
+                                if (!hasGeminiKey) {
+                                    alert(t('scanner.aiRequired') || 'Please add Gemini API Key in Settings first.');
+                                    return;
+                                }
+                                fileInputRef.current?.click();
+                            }}
+                            disabled={scanning}
+                        >
+                            📷 {t('scanner.takePhoto')}
+                        </button>
+                        <input
+                            ref={fileInputRef}
+                            type="file"
+                            accept="image/*"
+                            capture="environment"
+                            onChange={handlePhotoCapture}
+                            style={{ display: 'none' }}
+                        />
+                    </div>
                 </div>
 
                 {/* Scanning indicator */}
                 {scanning && (
                     <div className={styles.scanningIndicator}>
-                        <div className="spinner" />
-                        <p>{mode === 'ai' ? t('scanner.analyzing') : t('scanner.scanning')}</p>
+                        {mode === 'ai' ? (
+                            <div className="flex flex-col items-center">
+                                <GeneratingLoader />
+                            </div>
+                        ) : (
+                            <>
+                                <div className="spinner" />
+                                <p>{t('scanner.scanning')}</p>
+                            </>
+                        )}
                     </div>
                 )}
 
@@ -200,7 +222,25 @@ export default function ScannerPage() {
 
                         {/* No product found */}
                         {!result.product && !result.aiAnalysis && (
-                            <div className="alert alert-info">ℹ️ {t('scanner.noResults')}</div>
+                            <div className="flex flex-col gap-2">
+                                <div className="alert alert-info">ℹ️ {t('scanner.noResults')}</div>
+                                {/* Suggest AI Scan if in Classic Mode and no result */}
+                                {mode === 'classic' && hasGeminiKey && (
+                                    <button
+                                        className="btn btn-primary"
+                                        onClick={() => {
+                                            setMode('ai');
+                                            // Trigger scan immediately if input present
+                                            if (barcodeInput) {
+                                                // We can't easily call handleBarcodeScan here with new mode relying on state update
+                                                // Ideally we'd pass mode as arg, but let's just switch UI for now and let user click
+                                            }
+                                        }}
+                                    >
+                                        🤖 Try AI Scan
+                                    </button>
+                                )}
+                            </div>
                         )}
 
                         {/* AI Analysis */}
