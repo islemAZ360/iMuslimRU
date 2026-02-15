@@ -1,14 +1,57 @@
 {
     "app": {
         "name": "iMuslimRU",
-        "tagline": "Your Islamic Companion in Russia"
+        "tagline": "Your Islamic Companion in Russia",
+        "loading": "Loading..."
     },
     "nav": {
         "home": "Home",
         "prayer": "Prayer",
         "scanner": "Scanner",
+        "believer": "Believer",
         "health": "My Health",
-        "settings": "Settings"
+        "settings": "Settings",
+        "stats": "Statistics"
+    },
+    "believer": {
+        "title": "The Believer",
+        "subtitle": "Zakat, Fasting & Remembrance — your spiritual companion",
+        "zakatCalculator": "Zakat Calculator",
+        "calendar": "Islamic Calendar",
+        "adhkarStats": "Adhkar Statistics",
+        "adhkarTracker": "Adhkar Tracker"
+    },
+    "zakat": {
+        "savings": "Savings & Cash",
+        "gold": "Gold",
+        "silver": "Silver",
+        "fitr": "Zakat al-Fitr",
+        "goldValue": "Total Gold Value",
+        "totalAmount": "Total Amount",
+        "calculate": "Calculate Zakat",
+        "payable": "Zakat Payable",
+        "distribution": "Distribute to the 8 categories of recipients from the Quran.",
+        "calculateAgain": "Calculate Another",
+        "hawlNote": "Ensure this has been held for one complete lunar year (Hawl)."
+    },
+    "stats": {
+        "title": "Faith Statistics",
+        "subtitle": "Tracking your spiritual journey",
+        "weeklyActivity": "Weekly Activity",
+        "total": "Total Adhkar",
+        "streak": "Current Streak",
+        "adhkarDays": "Adhkar Days",
+        "adhkarDaysDesc": "Days with adhkar activity (30d)",
+        "nawafilDays": "Nawafil Days",
+        "nawafilDaysDesc": "Days with voluntary prayers (30d)",
+        "totalAdhkar": "Total Adhkar",
+        "totalAdhkarDesc": "Total remembrances in 30 days",
+        "streakDesc": "Consecutive days of worship",
+        "tips": "Tips to Improve",
+        "tipAdhkar": "Try to complete morning and evening adhkar daily",
+        "tipNawafil": "Pray the Sunnah prayers (Rawatib) regularly",
+        "tipVolume": "Increase your daily dhikr count — aim for 100+ per day",
+        "tipExcellent": "MashaAllah! Keep up the excellent consistency!"
     },
     "auth": {
         "login": "Log In",

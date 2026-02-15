@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Noto+Sans+Arabic:wght@300;400;500;600;700;800&family=Amiri:wght@400;700&family=Cairo:wght@400;600;700;800;900&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -6,8 +8,6 @@
    iMuslimRU — Premium Design System v3.0
    Ultra-professional Islamic PWA
    ======================================== */
-
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Noto+Sans+Arabic:wght@300;400;500;600;700;800&family=Amiri:wght@400;700&family=Cairo:wght@400;600;700;800;900&display=swap');
 
 :root {
   --primary-50: #ecfdf5;
@@ -1001,5 +1001,35 @@ a:hover {
 @media (min-width: 768px) {
   .container {
     max-width: 560px;
+  }
+}
+
+/* Dock bubble pulse animation */
+@keyframes dockPulse {
+
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 0.6;
+  }
+
+  50% {
+    transform: scale(1.15);
+    opacity: 0;
+  }
+}
+
+/* Loading bar slide animation */
+@keyframes loadingSlide {
+  0% {
+    transform: translateX(-100%);
+  }
+
+  50% {
+    transform: translateX(200%);
+  }
+
+  100% {
+    transform: translateX(-100%);
   }
 }

@@ -64,8 +64,6 @@ export default function Navbar() {
         <div className="fixed bottom-4 left-0 right-0 z-50 flex justify-center">
             <FloatingDock
                 items={links}
-                // Adjust mobile class to ensure it's visible and accessible
-                mobileClassName=""
             />
         </div>
     );

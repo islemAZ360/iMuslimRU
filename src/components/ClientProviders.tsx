@@ -1,12 +1,79 @@
 'use client';
 
 import React from 'react';
+import { usePathname } from 'next/navigation';
 import { ThemeProvider } from '@/contexts/ThemeContext';
 import { I18nProvider } from '@/contexts/I18nContext';
 import { AuthProvider } from '@/contexts/AuthContext';
 import { SettingsProvider } from '@/contexts/SettingsContext';
 import { FloatingDock } from '@/components/ui/floating-dock';
-import { IconHome, IconBuildingMosque, IconBarcode, IconHeartbeat, IconSettings, IconPray } from '@tabler/icons-react';
+import {
+    IconHome,
+    IconBuildingMosque,
+    IconBarcode,
+    IconMoon,
+    IconChartDonut3,
+    IconSettings,
+} from '@tabler/icons-react';
+
+function DockNavigation() {
+    const pathname = usePathname();
+
+    // Hide dock on login/register pages
+    if (pathname === '/login' || pathname === '/register') return null;
+
+    return (
+        <div
+            style={{
+                position: 'fixed',
+                bottom: '16px',
+                left: 0,
+                right: 0,
+                zIndex: 9999,
+                display: 'flex',
+                justifyContent: 'center',
+                pointerEvents: 'none',
+            }}
+        >
+            <div style={{ pointerEvents: 'auto' }}>
+                <FloatingDock
+                    items={[
+                        {
+                            title: 'Home',
+                            icon: <IconHome style={{ width: '100%', height: '100%', color: '#6ee7b7' }} />,
+                            href: '/',
+                        },
+                        {
+                            title: 'Prayer',
+                            icon: <IconBuildingMosque style={{ width: '100%', height: '100%', color: '#6ee7b7' }} />,
+                            href: '/prayer',
+                        },
+                        {
+                            title: 'Scanner',
+                            icon: <IconBarcode style={{ width: '100%', height: '100%', color: '#6ee7b7' }} />,
+                            href: '/scanner',
+                        },
+                        {
+                            title: 'Believer',
+                            icon: <IconMoon style={{ width: '100%', height: '100%', color: '#6ee7b7' }} />,
+                            href: '/believer',
+                        },
+                        {
+                            title: 'Stats',
+                            icon: <IconChartDonut3 style={{ width: '100%', height: '100%', color: '#6ee7b7' }} />,
+                            href: '/stats',
+                        },
+                        {
+                            title: 'Settings',
+                            icon: <IconSettings style={{ width: '100%', height: '100%', color: '#6ee7b7' }} />,
+                            href: '/settings',
+                        },
+                    ]}
+                />
+            </div>
+        </div>
+    );
+}
 
 export default function ClientProviders({ children }: { children: React.ReactNode }) {
     return (
@@ -15,22 +82,7 @@ export default function ClientProviders({ children }: { children: React.ReactNod
                 <SettingsProvider>
                     <AuthProvider>
                         {children}
-                        <div className="fixed bottom-6 left-0 right-0 z-50 flex justify-center pointer-events-none">
-                            <div className="pointer-events-auto">
-                                <FloatingDock
-                                    items={[
-                                        { title: 'Home', icon: <IconHome className="w-full h-full text-neutral-500 dark:text-neutral-300" />, href: '/' },
-                                        { title: 'Prayer', icon: <IconBuildingMosque className="w-full h-full text-neutral-500 dark:text-neutral-300" />, href: '/prayer' },
-                                        { title: 'Scanner', icon: <IconBarcode className="w-full h-full text-neutral-500 dark:text-neutral-300" />, href: '/scanner' },
-                                        { title: 'Believer', icon: <IconPray className="w-full h-full text-neutral-500 dark:text-neutral-300" />, href: '/believer' },
-                                        { title: 'Health', icon: <IconHeartbeat className="w-full h-full text-neutral-500 dark:text-neutral-300" />, href: '/health' },
-                                        { title: 'Settings', icon: <IconSettings className="w-full h-full text-neutral-500 dark:text-neutral-300" />, href: '/settings' },
-                                    ]}
-                                    desktopClassName="dark:bg-black/50 backdrop-blur-md border-neutral-800"
-                                    mobileClassName="translate-y-0"
-                                />
-                            </div>
-                        </div>
+                        <DockNavigation />
                     </AuthProvider>
                 </SettingsProvider>
             </I18nProvider>

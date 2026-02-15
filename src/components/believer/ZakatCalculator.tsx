@@ -2,39 +2,39 @@
 
 import React, { useState } from 'react';
 import { useI18n } from '@/contexts/I18nContext';
-import { MotionDiv, MotionButton } from '@/lib/framer';
-import { AnimatePresence, motion } from 'framer-motion';
-import { IconCalculator, IconChevronRight, IconChevronLeft, IconCash, IconCircles, IconInfoCircle } from '@tabler/icons-react';
+import { motion, AnimatePresence } from 'motion/react';
+import {
+    IconCalculator,
+    IconChevronRight,
+    IconChevronLeft,
+    IconCash,
+    IconCircles,
+    IconInfoCircle,
+    IconDiamond,
+    IconUsers,
+} from '@tabler/icons-react';
 
 type ZakatType = 'savings' | 'gold' | 'silver' | 'fitr';
 
 const NISAB_GOLD_GRAMS = 85;
-const NISAB_SILVER_GRAMS = 595;
-const GOLD_PRICE_PER_GRAM_EST = 70; // USD estimate, should be fetched or user input
-const SILVER_PRICE_PER_GRAM_EST = 0.8; // USD estimate
 
 export function ZakatCalculator() {
     const { t } = useI18n();
     const [step, setStep] = useState<'type' | 'input' | 'result'>('type');
     const [type, setType] = useState<ZakatType | null>(null);
     const [amount, setAmount] = useState<string>('');
-    const [currency, setCurrency] = useState('USD');
+    const [currency] = useState('USD');
     const [result, setResult] = useState<number | null>(null);
 
     const calculateZakat = () => {
         const val = parseFloat(amount);
         if (isNaN(val)) return;
-
         let zakat = 0;
-        // Simple logic for MVP
         if (type === 'savings' || type === 'gold' || type === 'silver') {
-            // 2.5% logic
             zakat = val * 0.025;
         } else if (type === 'fitr') {
-            // Fixed amount per person (e.g. $10-15)
-            zakat = val * 12; // Assuming val is number of people
+            zakat = val * 12;
         }
-
         setResult(zakat);
         setStep('result');
     };
@@ -46,106 +46,186 @@ export function ZakatCalculator() {
         setResult(null);
     };
 
+    const zakatTypes = [
+        {
+            id: 'savings' as ZakatType,
+            icon: <IconCash size={22} />,
+            label: t('zakat.savings') || 'Savings & Cash',
+            desc: '2.5% of total savings held for a lunar year',
+            gradient: 'linear-gradient(135deg, rgba(59,130,246,0.15), rgba(59,130,246,0.05))',
+            borderColor: 'rgba(59,130,246,0.25)',
+            iconBg: 'rgba(59,130,246,0.15)',
+            iconColor: '#60a5fa',
+        },
+        {
+            id: 'gold' as ZakatType,
+            icon: <IconDiamond size={22} />,
+            label: t('zakat.gold') || 'Gold',
+            desc: `2.5% if exceeds ${NISAB_GOLD_GRAMS}g`,
+            gradient: 'linear-gradient(135deg, rgba(251,191,36,0.15), rgba(251,191,36,0.05))',
+            borderColor: 'rgba(251,191,36,0.25)',
+            iconBg: 'rgba(251,191,36,0.15)',
+            iconColor: '#fbbf24',
+        },
+        {
+            id: 'silver' as ZakatType,
+            icon: <IconCircles size={22} />,
+            label: t('zakat.silver') || 'Silver',
+            desc: '2.5% if exceeds 595g',
+            gradient: 'linear-gradient(135deg, rgba(148,163,184,0.15), rgba(148,163,184,0.05))',
+            borderColor: 'rgba(148,163,184,0.25)',
+            iconBg: 'rgba(148,163,184,0.15)',
+            iconColor: '#94a3b8',
+        },
+        {
+            id: 'fitr' as ZakatType,
+            icon: <IconUsers size={22} />,
+            label: t('zakat.fitr') || 'Zakat al-Fitr',
+            desc: 'Per-person amount before Eid prayer',
+            gradient: 'linear-gradient(135deg, rgba(16,185,129,0.15), rgba(16,185,129,0.05))',
+            borderColor: 'rgba(16,185,129,0.25)',
+            iconBg: 'rgba(16,185,129,0.15)',
+            iconColor: '#34d399',
+        },
+    ];
+
     return (
-        <div className="w-full max-w-2xl mx-auto p-6 bg-white dark:bg-neutral-900 rounded-3xl border border-neutral-200 dark:border-neutral-800 shadow-xl">
-            <div className="flex items-center gap-3 mb-6">
-                <div className="p-3 bg-emerald-100 dark:bg-emerald-900/30 rounded-xl">
-                    <IconCalculator className="w-6 h-6 text-emerald-600 dark:text-emerald-400" />
+        <div style={{
+            background: 'rgba(255,255,255,0.03)',
+            border: '1px solid rgba(255,255,255,0.06)',
+            borderRadius: '20px',
+            padding: '24px',
+            backdropFilter: 'blur(12px)',
+        }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '20px' }}>
+                <div style={{
+                    width: '40px', height: '40px', borderRadius: '12px',
+                    background: 'rgba(16,185,129,0.12)', display: 'flex',
+                    alignItems: 'center', justifyContent: 'center',
+                }}>
+                    <IconCalculator size={20} style={{ color: '#34d399' }} />
                 </div>
-                <h2 className="text-2xl font-bold bg-gradient-to-r from-emerald-600 to-teal-500 bg-clip-text text-transparent">
+                <h2 style={{
+                    fontSize: '20px', fontWeight: 800, margin: 0,
+                    background: 'linear-gradient(135deg, #34d399, #06b6d4)',
+                    WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
+                }}>
                     {t('believer.zakatCalculator') || 'Zakat Calculator'}
                 </h2>
             </div>
 
-            <div className="min-h-[300px] relative overflow-hidden">
+            <div style={{ minHeight: '220px', position: 'relative' }}>
                 <AnimatePresence mode="wait">
                     {step === 'type' && (
                         <motion.div
                             key="type"
-                            initial={{ opacity: 0, x: -20 }}
+                            initial={{ opacity: 0, x: -15 }}
                             animate={{ opacity: 1, x: 0 }}
-                            exit={{ opacity: 0, x: 20 }}
-                            className="grid grid-cols-1 md:grid-cols-2 gap-4"
+                            exit={{ opacity: 0, x: 15 }}
+                            style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '10px' }}
                         >
-                            <button
-                                onClick={() => { setType('savings'); setStep('input'); }}
-                                className="p-6 rounded-2xl border border-neutral-200 dark:border-neutral-800 hover:border-emerald-500 dark:hover:border-emerald-500 hover:bg-emerald-50 dark:hover:bg-emerald-900/10 transition-all text-left group relative overflow-hidden"
-                            >
-                                <div className="absolute top-0 right-0 p-3 opacity-0 group-hover:opacity-100 transition-opacity">
-                                    <IconChevronRight className="text-emerald-500" />
-                                </div>
-                                <div className="mb-3 p-3 w-fit rounded-full bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 group-hover:scale-110 transition-transform">
-                                    <IconCash size={24} />
-                                </div>
-                                <h3 className="font-bold text-lg mb-1">{t('zakat.savings') || 'Savings & Cash'}</h3>
-                                <p className="text-sm text-neutral-500 dark:text-neutral-400">
-                                    2.5% if held for a lunar year and exceeds Nisab.
-                                </p>
-                            </button>
-
-                            <button
-                                onClick={() => { setType('gold'); setStep('input'); }}
-                                className="p-6 rounded-2xl border border-neutral-200 dark:border-neutral-800 hover:border-amber-500 dark:hover:border-amber-500 hover:bg-amber-50 dark:hover:bg-amber-900/10 transition-all text-left group relative overflow-hidden"
-                            >
-                                <div className="absolute top-0 right-0 p-3 opacity-0 group-hover:opacity-100 transition-opacity">
-                                    <IconChevronRight className="text-amber-500" />
-                                </div>
-                                <div className="mb-3 p-3 w-fit rounded-full bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 group-hover:scale-110 transition-transform">
-                                    <IconCircles size={24} />
-                                </div>
-                                <h3 className="font-bold text-lg mb-1">{t('zakat.gold') || 'Gold'}</h3>
-                                <p className="text-sm text-neutral-500 dark:text-neutral-400">
-                                    2.5% if exceeds {NISAB_GOLD_GRAMS}g.
-                                </p>
-                            </button>
+                            {zakatTypes.map((z) => (
+                                <button
+                                    key={z.id}
+                                    onClick={() => { setType(z.id); setStep('input'); }}
+                                    style={{
+                                        background: z.gradient,
+                                        border: `1px solid ${z.borderColor}`,
+                                        borderRadius: '14px',
+                                        padding: '16px 12px',
+                                        cursor: 'pointer',
+                                        textAlign: 'left',
+                                        transition: 'transform 0.15s, box-shadow 0.2s',
+                                        position: 'relative',
+                                        overflow: 'hidden',
+                                        color: 'inherit',
+                                    }}
+                                    onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = `0 8px 20px ${z.borderColor}`; }}
+                                    onMouseLeave={(e) => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = 'none'; }}
+                                >
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                                        <div style={{
+                                            width: '36px', height: '36px', borderRadius: '10px',
+                                            background: z.iconBg, display: 'flex',
+                                            alignItems: 'center', justifyContent: 'center', color: z.iconColor,
+                                        }}>
+                                            {z.icon}
+                                        </div>
+                                        <IconChevronRight size={16} style={{ color: 'rgba(255,255,255,0.3)' }} />
+                                    </div>
+                                    <h3 style={{ fontSize: '14px', fontWeight: 700, marginTop: '10px', marginBottom: '2px', color: 'rgba(255,255,255,0.9)' }}>
+                                        {z.label}
+                                    </h3>
+                                    <p style={{ fontSize: '11px', color: 'rgba(255,255,255,0.45)', margin: 0, lineHeight: 1.3 }}>
+                                        {z.desc}
+                                    </p>
+                                </button>
+                            ))}
                         </motion.div>
                     )}
 
                     {step === 'input' && (
                         <motion.div
                             key="input"
-                            initial={{ opacity: 0, x: 20 }}
+                            initial={{ opacity: 0, x: 15 }}
                             animate={{ opacity: 1, x: 0 }}
-                            exit={{ opacity: 0, x: -20 }}
-                            className="space-y-6"
+                            exit={{ opacity: 0, x: -15 }}
+                            style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}
                         >
-                            <button
-                                onClick={() => setStep('type')}
-                                className="flex items-center text-sm text-neutral-500 hover:text-neutral-800 dark:hover:text-neutral-200 transition-colors"
-                            >
-                                <IconChevronLeft size={16} className="mr-1" />
-                                {t('common.back') || 'Back'}
+                            <button onClick={() => setStep('type')} style={{
+                                background: 'none', border: 'none', color: 'rgba(255,255,255,0.5)',
+                                cursor: 'pointer', display: 'flex', alignItems: 'center', fontSize: '13px', padding: 0,
+                            }}>
+                                <IconChevronLeft size={16} /> {t('common.back') || 'Back'}
                             </button>
-
                             <div>
-                                <label className="block text-sm font-medium mb-2 text-neutral-700 dark:text-neutral-300">
-                                    {type === 'gold' ? (t('zakat.goldValue') || 'Total Value of Gold') : (t('zakat.totalAmount') || 'Total Amount')}
+                                <label style={{ fontSize: '12px', fontWeight: 600, color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                                    {type === 'fitr' ? 'Number of People' : 'Total Amount'}
                                 </label>
-                                <div className="relative group">
+                                <div style={{ position: 'relative', marginTop: '8px' }}>
                                     <input
                                         type="number"
                                         value={amount}
                                         onChange={(e) => setAmount(e.target.value)}
-                                        className="w-full p-4 text-xl rounded-xl border border-neutral-300 dark:border-neutral-700 bg-transparent focus:ring-2 focus:ring-emerald-500 outline-none transition-all group-hover:border-neutral-400 dark:group-hover:border-neutral-600"
                                         placeholder="0.00"
                                         autoFocus
+                                        style={{
+                                            width: '100%', padding: '14px 60px 14px 16px',
+                                            fontSize: '20px', fontWeight: 700, borderRadius: '12px',
+                                            border: '1px solid rgba(255,255,255,0.1)',
+                                            background: 'rgba(255,255,255,0.04)',
+                                            color: '#fff', outline: 'none',
+                                            boxSizing: 'border-box',
+                                        }}
                                     />
-                                    <span className="absolute right-4 top-1/2 -translate-y-1/2 text-neutral-400 font-bold">
-                                        {currency}
-                                    </span>
+                                    <span style={{
+                                        position: 'absolute', right: '16px', top: '50%',
+                                        transform: 'translateY(-50%)', fontSize: '14px',
+                                        fontWeight: 700, color: 'rgba(255,255,255,0.3)',
+                                    }}>{currency}</span>
                                 </div>
-                                <div className="flex items-start gap-2 mt-3 p-3 bg-neutral-50 dark:bg-neutral-800/50 rounded-lg text-xs text-neutral-500">
-                                    <IconInfoCircle size={14} className="mt-0.5 flex-shrink-0" />
-                                    <span>{t('zakat.hawlNote') || 'Ensure this amount has been held for one complete lunar year (Hawl).'}</span>
+                                <div style={{
+                                    display: 'flex', alignItems: 'flex-start', gap: '6px',
+                                    marginTop: '10px', padding: '8px 10px', borderRadius: '8px',
+                                    background: 'rgba(16,185,129,0.06)', fontSize: '11px', color: 'rgba(255,255,255,0.4)',
+                                }}>
+                                    <IconInfoCircle size={14} style={{ flexShrink: 0, marginTop: '1px' }} />
+                                    <span>{t('zakat.hawlNote') || 'Ensure this has been held for one complete lunar year (Hawl).'}</span>
                                 </div>
                             </div>
-
                             <button
                                 onClick={calculateZakat}
                                 disabled={!amount}
-                                className="w-full py-4 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white rounded-xl font-bold text-lg transition-all shadow-lg hover:shadow-emerald-500/25 disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none transform hover:-translate-y-0.5 active:translate-y-0"
+                                style={{
+                                    padding: '14px', borderRadius: '12px', border: 'none',
+                                    background: !amount ? 'rgba(255,255,255,0.05)' : 'linear-gradient(135deg, #059669, #0d9488)',
+                                    color: !amount ? 'rgba(255,255,255,0.3)' : '#fff',
+                                    fontSize: '16px', fontWeight: 700, cursor: amount ? 'pointer' : 'not-allowed',
+                                    transition: 'all 0.2s',
+                                    boxShadow: amount ? '0 4px 16px rgba(5,150,105,0.3)' : 'none',
+                                }}
                             >
-                                {t('zakat.calculate') || 'Calculate'}
+                                {t('zakat.calculate') || 'Calculate Zakat'}
                             </button>
                         </motion.div>
                     )}
@@ -153,32 +233,35 @@ export function ZakatCalculator() {
                     {step === 'result' && result !== null && (
                         <motion.div
                             key="result"
-                            initial={{ opacity: 0, scale: 0.9 }}
+                            initial={{ opacity: 0, scale: 0.95 }}
                             animate={{ opacity: 1, scale: 1 }}
-                            transition={{ type: "spring", duration: 0.5 }}
-                            className="text-center py-8"
+                            transition={{ type: "spring", duration: 0.4 }}
+                            style={{ textAlign: 'center', padding: '16px 0' }}
                         >
-                            <h3 className="text-neutral-500 dark:text-neutral-400 font-medium mb-4 uppercase tracking-wider text-sm">
+                            <p style={{ fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1.5px', color: 'rgba(255,255,255,0.4)', marginBottom: '8px' }}>
                                 {t('zakat.payable') || 'Zakat Payable'}
-                            </h3>
-                            <div className="text-6xl font-black bg-gradient-to-r from-emerald-500 to-teal-400 bg-clip-text text-transparent mb-2 tracking-tighter">
-                                {result.toLocaleString(undefined, { maximumFractionDigits: 2 })}<span className="text-3xl ml-1 text-emerald-500">{currency}</span>
+                            </p>
+                            <div style={{ fontSize: '48px', fontWeight: 900, lineHeight: 1, marginBottom: '4px' }}>
+                                <span style={{ background: 'linear-gradient(135deg, #34d399, #06b6d4)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
+                                    {result.toLocaleString(undefined, { maximumFractionDigits: 2 })}
+                                </span>
+                                <span style={{ fontSize: '20px', color: '#34d399', marginLeft: '4px' }}>{currency}</span>
                             </div>
-
-                            <div className="max-w-sm mx-auto mt-6 p-4 rounded-2xl bg-emerald-50 dark:bg-emerald-900/10 border border-emerald-100 dark:border-emerald-900/30">
-                                <p className="text-sm text-emerald-800 dark:text-emerald-200">
-                                    {t('zakat.distribution') || 'This amount should be distributed to the 8 categories of recipients mentioned in the Quran.'}
-                                </p>
+                            <div style={{
+                                maxWidth: '280px', margin: '16px auto 0', padding: '10px 14px',
+                                borderRadius: '10px', background: 'rgba(16,185,129,0.08)',
+                                border: '1px solid rgba(16,185,129,0.12)',
+                                fontSize: '12px', color: 'rgba(52,211,153,0.8)', lineHeight: 1.4,
+                            }}>
+                                {t('zakat.distribution') || 'Distribute to the 8 categories of recipients from the Quran.'}
                             </div>
-
-                            <div className="mt-8">
-                                <button
-                                    onClick={reset}
-                                    className="px-8 py-3 bg-neutral-100 dark:bg-neutral-800 rounded-full font-medium hover:bg-neutral-200 dark:hover:bg-neutral-700 transition-colors text-neutral-600 dark:text-neutral-300"
-                                >
-                                    {t('zakat.calculateAgain') || 'Calculate Another'}
-                                </button>
-                            </div>
+                            <button onClick={reset} style={{
+                                marginTop: '16px', padding: '10px 24px', borderRadius: '20px',
+                                background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.08)',
+                                color: 'rgba(255,255,255,0.6)', fontSize: '13px', fontWeight: 600, cursor: 'pointer',
+                            }}>
+                                {t('zakat.calculateAgain') || 'Calculate Another'}
+                            </button>
                         </motion.div>
                     )}
                 </AnimatePresence>

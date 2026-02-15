@@ -1,196 +1,215 @@
 "use client";
-/**
- * Note: Use position fixed according to your needs
- * Desktop navbar is better positioned at the bottom
- * Mobile navbar is better positioned at bottom right.
- **/
 
-import { cn } from "@/lib/utils";
-import { IconLayoutNavbarCollapse } from "@tabler/icons-react";
+/**
+ * Glowing Bubble Dock — Premium macOS-style Navigation
+ * Green orbs → golden when active
+ * Responsive: adapts for mobile (smaller bubbles, tighter spacing)
+ */
+
 import {
     AnimatePresence,
-    MotionValue,
+    type MotionValue,
     motion,
     useMotionValue,
     useSpring,
     useTransform,
 } from "motion/react";
+import { useRef, useState, useEffect } from "react";
+import { usePathname } from "next/navigation";
 
-import { useRef, useState } from "react";
-
-export const FloatingDock = ({
+export function FloatingDock({
     items,
-    desktopClassName,
-    mobileClassName,
 }: {
     items: { title: string; icon: React.ReactNode; href: string }[];
-    desktopClassName?: string;
-    mobileClassName?: string;
-}) => {
-    return (
-        <>
-            <FloatingDockDesktop items={items} className={desktopClassName} />
-            <FloatingDockMobile items={items} className={mobileClassName} />
-        </>
-    );
-};
+}) {
+    const mouseX = useMotionValue(Infinity);
+    const pathname = usePathname();
+    const [isMobile, setIsMobile] = useState(false);
 
-const FloatingDockMobile = ({
-    items,
-    className,
-}: {
-    items: { title: string; icon: React.ReactNode; href: string }[];
-    className?: string;
-}) => {
-    const [open, setOpen] = useState(false);
-    return (
-        <div className={cn("relative block md:hidden", className)}>
-            <AnimatePresence>
-                {open && (
-                    <motion.div
-                        layoutId="nav"
-                        className="absolute inset-x-0 bottom-full mb-2 flex flex-col gap-2"
-                    >
-                        {items.map((item, idx) => (
-                            <motion.div
-                                key={item.title}
-                                initial={{ opacity: 0, y: 10 }}
-                                animate={{
-                                    opacity: 1,
-                                    y: 0,
-                                }}
-                                exit={{
-                                    opacity: 0,
-                                    y: 10,
-                                    transition: {
-                                        delay: idx * 0.05,
-                                    },
-                                }}
-                                transition={{ delay: (items.length - 1 - idx) * 0.05 }}
-                            >
-                                <a
-                                    href={item.href}
-                                    key={item.title}
-                                    className="flex h-10 w-10 items-center justify-center rounded-full bg-gray-50 dark:bg-neutral-900"
-                                >
-                                    <div className="h-4 w-4">{item.icon}</div>
-                                </a>
-                            </motion.div>
-                        ))}
-                    </motion.div>
-                )}
-            </AnimatePresence>
-            <button
-                onClick={() => setOpen(!open)}
-                className="flex h-10 w-10 items-center justify-center rounded-full bg-gray-50 dark:bg-neutral-800"
-            >
-                <IconLayoutNavbarCollapse className="h-5 w-5 text-neutral-500 dark:text-neutral-400" />
-            </button>
-        </div>
-    );
-};
+    useEffect(() => {
+        const check = () => setIsMobile(window.innerWidth < 640);
+        check();
+        window.addEventListener("resize", check);
+        return () => window.removeEventListener("resize", check);
+    }, []);
 
-const FloatingDockDesktop = ({
-    items,
-    className,
-}: {
-    items: { title: string; icon: React.ReactNode; href: string }[];
-    className?: string;
-}) => {
-    let mouseX = useMotionValue(Infinity);
     return (
-        <motion.div
-            onMouseMove={(e) => mouseX.set(e.pageX)}
+        <motion.nav
+            initial={{ y: 80, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ type: "spring", stiffness: 260, damping: 24, delay: 0.15 }}
+            onMouseMove={(e) => !isMobile && mouseX.set(e.pageX)}
             onMouseLeave={() => mouseX.set(Infinity)}
-            className={cn(
-                "mx-auto hidden h-16 items-end gap-4 rounded-2xl bg-gray-50 px-4 pb-3 md:flex dark:bg-neutral-900",
-                className,
-            )}
+            style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: isMobile ? "4px" : "8px",
+                padding: isMobile ? "6px 8px" : "8px 14px 10px 14px",
+                borderRadius: isMobile ? "18px" : "22px",
+                background: "rgba(8, 8, 8, 0.6)",
+                backdropFilter: "blur(24px) saturate(160%)",
+                WebkitBackdropFilter: "blur(24px) saturate(160%)",
+                border: "1px solid rgba(255, 255, 255, 0.07)",
+                boxShadow:
+                    "0 8px 32px rgba(0,0,0,0.45), inset 0 1px 0 rgba(255,255,255,0.04), 0 0 60px rgba(16,185,129,0.03)",
+            }}
         >
             {items.map((item) => (
-                <IconContainer mouseX={mouseX} key={item.title} {...item} />
+                <BubbleIcon
+                    mouseX={mouseX}
+                    key={item.title}
+                    title={item.title}
+                    icon={item.icon}
+                    href={item.href}
+                    isActive={pathname === item.href}
+                    isMobile={isMobile}
+                />
             ))}
-        </motion.div>
+        </motion.nav>
     );
-};
+}
 
-function IconContainer({
+function BubbleIcon({
     mouseX,
     title,
     icon,
     href,
+    isActive,
+    isMobile,
 }: {
-    mouseX: MotionValue;
+    mouseX: MotionValue<number>;
     title: string;
     icon: React.ReactNode;
     href: string;
+    isActive: boolean;
+    isMobile: boolean;
 }) {
-    let ref = useRef<HTMLDivElement>(null);
+    const ref = useRef<HTMLDivElement>(null);
 
-    let distance = useTransform(mouseX, (val) => {
-        let bounds = ref.current?.getBoundingClientRect() ?? { x: 0, width: 0 };
-
+    const distance = useTransform(mouseX, (val: number) => {
+        const bounds = ref.current?.getBoundingClientRect() ?? { x: 0, width: 0 };
         return val - bounds.x - bounds.width / 2;
     });
 
-    let widthTransform = useTransform(distance, [-150, 0, 150], [40, 80, 40]);
-    let heightTransform = useTransform(distance, [-150, 0, 150], [40, 80, 40]);
+    const baseSize = isMobile ? 42 : 46;
+    const hoverSize = isMobile ? 42 : 62;
+    const baseIcon = isMobile ? 20 : 21;
+    const hoverIcon = isMobile ? 20 : 28;
 
-    let widthTransformIcon = useTransform(distance, [-150, 0, 150], [20, 40, 20]);
-    let heightTransformIcon = useTransform(
-        distance,
-        [-150, 0, 150],
-        [20, 40, 20],
-    );
+    const sizeTransform = useTransform(distance, [-100, 0, 100], [baseSize, hoverSize, baseSize]);
+    const iconSizeTransform = useTransform(distance, [-100, 0, 100], [baseIcon, hoverIcon, baseIcon]);
 
-    let width = useSpring(widthTransform, {
-        mass: 0.1,
-        stiffness: 150,
-        damping: 12,
-    });
-    let height = useSpring(heightTransform, {
-        mass: 0.1,
-        stiffness: 150,
-        damping: 12,
-    });
-
-    let widthIcon = useSpring(widthTransformIcon, {
-        mass: 0.1,
-        stiffness: 150,
-        damping: 12,
-    });
-    let heightIcon = useSpring(heightTransformIcon, {
-        mass: 0.1,
-        stiffness: 150,
-        damping: 12,
-    });
+    const size = useSpring(sizeTransform, { stiffness: 320, damping: 24 });
+    const iconSize = useSpring(iconSizeTransform, { stiffness: 320, damping: 24 });
 
     const [hovered, setHovered] = useState(false);
 
+    const greenStyle = {
+        background: "radial-gradient(circle at 30% 30%, rgba(52,211,153,0.28), rgba(16,185,129,0.12) 60%, rgba(6,78,59,0.18))",
+        border: "1.5px solid rgba(52, 211, 153, 0.22)",
+        boxShadow: "0 0 10px rgba(16,185,129,0.12), inset 0 1px 0 rgba(255,255,255,0.08)",
+    };
+
+    const goldStyle = {
+        background: "radial-gradient(circle at 30% 30%, rgba(251,191,36,0.45), rgba(245,158,11,0.2) 60%, rgba(180,83,9,0.18))",
+        border: "1.5px solid rgba(251,191,36,0.45)",
+        boxShadow: "0 0 16px rgba(251,191,36,0.25), 0 0 6px rgba(245,158,11,0.15), inset 0 1px 0 rgba(255,255,255,0.12)",
+    };
+
+    const colors = isActive ? goldStyle : greenStyle;
+
     return (
-        <a href={href}>
+        <a href={href} style={{ textDecoration: "none", WebkitTapHighlightColor: "transparent" }}>
             <motion.div
                 ref={ref}
-                style={{ width, height }}
-                onMouseEnter={() => setHovered(true)}
+                style={{
+                    width: isMobile ? baseSize : size,
+                    height: isMobile ? baseSize : size,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    borderRadius: "50%",
+                    position: "relative",
+                    cursor: "pointer",
+                    ...colors,
+                    transition: "background 0.3s, border 0.3s, box-shadow 0.3s",
+                }}
+                onMouseEnter={() => !isMobile && setHovered(true)}
                 onMouseLeave={() => setHovered(false)}
-                className="relative flex aspect-square items-center justify-center rounded-full bg-gray-200 dark:bg-neutral-800"
+                whileTap={{ scale: 0.9 }}
             >
+                {/* Glass shine */}
+                <div
+                    style={{
+                        position: "absolute",
+                        top: "12%",
+                        left: "18%",
+                        width: "40%",
+                        height: "28%",
+                        borderRadius: "50%",
+                        background: "radial-gradient(ellipse, rgba(255,255,255,0.2), transparent)",
+                        pointerEvents: "none",
+                    }}
+                />
+
+                {/* Desktop tooltip */}
                 <AnimatePresence>
-                    {hovered && (
+                    {hovered && !isMobile && (
                         <motion.div
-                            initial={{ opacity: 0, y: 10, x: "-50%" }}
-                            animate={{ opacity: 1, y: 0, x: "-50%" }}
-                            exit={{ opacity: 0, y: 2, x: "-50%" }}
-                            className="absolute -top-8 left-1/2 w-fit rounded-md border border-gray-200 bg-gray-100 px-2 py-0.5 text-xs whitespace-pre text-neutral-700 dark:border-neutral-900 dark:bg-neutral-800 dark:text-white"
+                            initial={{ opacity: 0, y: 6 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: 4 }}
+                            transition={{ duration: 0.1 }}
+                            style={{
+                                position: "absolute",
+                                top: "-32px",
+                                left: "50%",
+                                transform: "translateX(-50%)",
+                                padding: "3px 10px",
+                                borderRadius: "8px",
+                                background: isActive ? "rgba(180,83,9,0.9)" : "rgba(6,78,59,0.9)",
+                                color: "#fff",
+                                fontSize: "11px",
+                                fontWeight: 600,
+                                letterSpacing: "0.3px",
+                                whiteSpace: "nowrap",
+                                pointerEvents: "none",
+                                boxShadow: "0 4px 12px rgba(0,0,0,0.3)",
+                            }}
                         >
                             {title}
                         </motion.div>
                     )}
                 </AnimatePresence>
+
+                {/* Active pulse ring */}
+                {isActive && (
+                    <div
+                        style={{
+                            position: "absolute",
+                            inset: "-3px",
+                            borderRadius: "50%",
+                            border: "1px solid rgba(251,191,36,0.2)",
+                            animation: "dockPulse 2.5s ease-in-out infinite",
+                            pointerEvents: "none",
+                        }}
+                    />
+                )}
+
+                {/* Icon */}
                 <motion.div
-                    style={{ width: widthIcon, height: heightIcon }}
-                    className="flex items-center justify-center"
+                    style={{
+                        width: isMobile ? baseIcon : iconSize,
+                        height: isMobile ? baseIcon : iconSize,
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        filter: isActive
+                            ? "brightness(1.4) drop-shadow(0 0 3px rgba(251,191,36,0.5))"
+                            : "brightness(1.1) drop-shadow(0 0 2px rgba(16,185,129,0.3))",
+                        transition: "filter 0.3s",
+                    }}
                 >
                     {icon}
                 </motion.div>

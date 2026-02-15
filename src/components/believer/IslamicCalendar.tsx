@@ -3,74 +3,203 @@
 import React from 'react';
 import { useI18n } from '@/contexts/I18nContext';
 import { IconCalendarEvent } from '@tabler/icons-react';
-import { motion } from 'framer-motion';
+import { motion } from 'motion/react';
 
-// Static data for demo purposes. Ideally use a library like hijri-converter
-const ISLAMIC_EVENTS = [
-    { name: 'Ramadan Start', date: '2026-02-18', hijri: '1 Ramadan 1447', type: 'major' },
-    { name: 'Laylat al-Qadr', date: '2026-03-15', hijri: '27 Ramadan 1447', type: 'major' },
-    { name: 'Eid al-Fitr', date: '2026-03-19', hijri: '1 Shawwal 1447', type: 'festival' },
-    { name: 'Arafah', date: '2026-05-26', hijri: '9 Dhu al-Hijjah 1447', type: 'major' },
-    { name: 'Eid al-Adha', date: '2026-05-27', hijri: '10 Dhu al-Hijjah 1447', type: 'festival' },
-    { name: 'Islamic New Year', date: '2026-06-16', hijri: '1 Muharram 1448', type: 'regular' },
-    { name: 'Ashura', date: '2026-06-25', hijri: '10 Muharram 1448', type: 'regular' },
+interface IslamicEvent {
+    nameEn: string;
+    nameAr: string;
+    nameRu: string;
+    date: string;
+    hijriEn: string;
+    hijriAr: string;
+    hijriRu: string;
+    type: 'festival' | 'major' | 'regular';
+}
+
+const ISLAMIC_EVENTS: IslamicEvent[] = [
+    {
+        nameEn: 'Ramadan Start', nameAr: 'بداية رمضان', nameRu: 'Начало Рамадана',
+        date: '2026-02-18',
+        hijriEn: 'Ramadan 1447 1', hijriAr: '١ رمضان ١٤٤٧', hijriRu: 'Рамадан 1447 1',
+        type: 'major',
+    },
+    {
+        nameEn: 'Laylat al-Qadr', nameAr: 'ليلة القدر', nameRu: 'Ночь Предопределения',
+        date: '2026-03-15',
+        hijriEn: 'Ramadan 1447 27', hijriAr: '٢٧ رمضان ١٤٤٧', hijriRu: 'Рамадан 1447 27',
+        type: 'major',
+    },
+    {
+        nameEn: 'Eid al-Fitr', nameAr: 'عيد الفطر', nameRu: 'Ураза-байрам',
+        date: '2026-03-19',
+        hijriEn: 'Shawwal 1447 1', hijriAr: '١ شوال ١٤٤٧', hijriRu: 'Шавваль 1447 1',
+        type: 'festival',
+    },
+    {
+        nameEn: 'Day of Arafah', nameAr: 'يوم عرفة', nameRu: 'День Арафата',
+        date: '2026-05-26',
+        hijriEn: 'Dhu al-Hijjah 1447 9', hijriAr: '٩ ذو الحجة ١٤٤٧', hijriRu: 'Зуль-хиджа 1447 9',
+        type: 'major',
+    },
+    {
+        nameEn: 'Eid al-Adha', nameAr: 'عيد الأضحى', nameRu: 'Курбан-байрам',
+        date: '2026-05-27',
+        hijriEn: 'Dhu al-Hijjah 1447 10', hijriAr: '١٠ ذو الحجة ١٤٤٧', hijriRu: 'Зуль-хиджа 1447 10',
+        type: 'festival',
+    },
+    {
+        nameEn: 'Islamic New Year', nameAr: 'رأس السنة الهجرية', nameRu: 'Исламский Новый год',
+        date: '2026-06-16',
+        hijriEn: 'Muharram 1448 1', hijriAr: '١ محرم ١٤٤٨', hijriRu: 'Мухаррам 1448 1',
+        type: 'regular',
+    },
+    {
+        nameEn: 'Ashura', nameAr: 'عاشوراء', nameRu: 'Ашура',
+        date: '2026-06-25',
+        hijriEn: 'Muharram 1448 10', hijriAr: '١٠ محرم ١٤٤٨', hijriRu: 'Мухаррам 1448 10',
+        type: 'regular',
+    },
 ];
 
+const typeConfig = {
+    festival: {
+        gradient: 'linear-gradient(135deg, rgba(251,191,36,0.12), rgba(245,158,11,0.04))',
+        border: 'rgba(251,191,36,0.2)',
+        badge: '🎉',
+        badgeBg: 'rgba(251,191,36,0.12)',
+        badgeColor: '#fbbf24',
+        dateBorder: 'rgba(251,191,36,0.3)',
+        dateColor: '#fbbf24',
+    },
+    major: {
+        gradient: 'linear-gradient(135deg, rgba(16,185,129,0.12), rgba(16,185,129,0.04))',
+        border: 'rgba(16,185,129,0.2)',
+        badge: '⭐',
+        badgeBg: 'rgba(16,185,129,0.12)',
+        badgeColor: '#34d399',
+        dateBorder: 'rgba(16,185,129,0.3)',
+        dateColor: '#34d399',
+    },
+    regular: {
+        gradient: 'linear-gradient(135deg, rgba(255,255,255,0.04), rgba(255,255,255,0.01))',
+        border: 'rgba(255,255,255,0.06)',
+        badge: '📅',
+        badgeBg: 'rgba(255,255,255,0.06)',
+        badgeColor: 'rgba(255,255,255,0.5)',
+        dateBorder: 'rgba(255,255,255,0.12)',
+        dateColor: 'rgba(255,255,255,0.5)',
+    },
+};
+
+const typeLabels = {
+    festival: { en: 'Festival', ar: 'عيد', ru: 'Праздник' },
+    major: { en: 'Major', ar: 'مهم', ru: 'Важный' },
+    regular: { en: 'Event', ar: 'مناسبة', ru: 'Событие' },
+};
+
 export function IslamicCalendar() {
-    const { t } = useI18n();
+    const { t, locale } = useI18n();
+
+    const getName = (event: IslamicEvent) => {
+        if (locale === 'ar') return event.nameAr;
+        if (locale === 'ru') return event.nameRu;
+        return event.nameEn;
+    };
+
+    const getHijri = (event: IslamicEvent) => {
+        if (locale === 'ar') return event.hijriAr;
+        if (locale === 'ru') return event.hijriRu;
+        return event.hijriEn;
+    };
+
+    const getTypeLabel = (type: 'festival' | 'major' | 'regular') => {
+        const lang = locale === 'ar' ? 'ar' : locale === 'ru' ? 'ru' : 'en';
+        return typeLabels[type][lang];
+    };
 
     return (
-        <div className="w-full max-w-2xl mx-auto p-6 bg-white dark:bg-neutral-900 rounded-3xl border border-neutral-200 dark:border-neutral-800 shadow-xl mt-6">
-            <div className="flex items-center gap-3 mb-6">
-                <div className="p-3 bg-indigo-100 dark:bg-indigo-900/30 rounded-xl">
-                    <IconCalendarEvent className="w-6 h-6 text-indigo-600 dark:text-indigo-400" />
+        <div style={{
+            background: 'rgba(255,255,255,0.03)',
+            border: '1px solid rgba(255,255,255,0.06)',
+            borderRadius: '20px',
+            padding: '24px',
+            backdropFilter: 'blur(12px)',
+        }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '20px' }}>
+                <div style={{
+                    width: '40px', height: '40px', borderRadius: '12px',
+                    background: 'rgba(99,102,241,0.12)', display: 'flex',
+                    alignItems: 'center', justifyContent: 'center',
+                }}>
+                    <IconCalendarEvent size={20} style={{ color: '#818cf8' }} />
                 </div>
-                <h2 className="text-2xl font-bold bg-gradient-to-r from-indigo-600 to-purple-500 bg-clip-text text-transparent">
-                    {t('believer.calendar') || 'Islamic Occasions'}
+                <h2 style={{
+                    fontSize: '20px', fontWeight: 800, margin: 0,
+                    background: 'linear-gradient(135deg, #818cf8, #a78bfa)',
+                    WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
+                }}>
+                    {t('believer.calendar') || 'Islamic Calendar'}
                 </h2>
             </div>
 
-            <div className="space-y-4">
-                {ISLAMIC_EVENTS.map((event, idx) => (
-                    <motion.div
-                        key={idx}
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: idx * 0.1 }}
-                        className={`flex items-center justify-between p-4 rounded-xl border transition-all hover:scale-[1.01] hover:shadow-sm ${event.type === 'festival'
-                            ? 'bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-800'
-                            : event.type === 'major'
-                                ? 'bg-emerald-50 dark:bg-emerald-900/20 border-emerald-200 dark:border-emerald-800'
-                                : 'bg-neutral-50 dark:bg-neutral-900 border-neutral-100 dark:border-neutral-800'
-                            }`}
-                    >
-                        <div className="flex items-center gap-4">
-                            <div className={`
-                flex flex-col items-center justify-center w-14 h-14 rounded-lg font-bold border-2 shadow-sm
-                ${event.type === 'festival' ? 'border-amber-400 text-amber-600 bg-white dark:bg-neutral-800' :
-                                    event.type === 'major' ? 'border-emerald-400 text-emerald-600 bg-white dark:bg-neutral-800' :
-                                        'border-neutral-300 text-neutral-500 bg-white dark:bg-neutral-800'}
-              `}>
-                                <span className="text-xs uppercase">{new Date(event.date).toLocaleString('default', { month: 'short' })}</span>
-                                <span className="text-xl">{new Date(event.date).getDate()}</span>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                {ISLAMIC_EVENTS.map((event, idx) => {
+                    const cfg = typeConfig[event.type];
+                    const d = new Date(event.date);
+
+                    return (
+                        <motion.div
+                            key={idx}
+                            initial={{ opacity: 0, y: 8 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: idx * 0.06 }}
+                            style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'space-between',
+                                padding: '12px 14px',
+                                borderRadius: '12px',
+                                background: cfg.gradient,
+                                border: `1px solid ${cfg.border}`,
+                                transition: 'transform 0.15s',
+                                cursor: 'default',
+                            }}
+                        >
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                                <div style={{
+                                    width: '44px', height: '44px', borderRadius: '10px',
+                                    border: `1.5px solid ${cfg.dateBorder}`,
+                                    display: 'flex', flexDirection: 'column',
+                                    alignItems: 'center', justifyContent: 'center',
+                                    background: 'rgba(0,0,0,0.2)', flexShrink: 0,
+                                }}>
+                                    <span style={{ fontSize: '10px', textTransform: 'uppercase', color: cfg.dateColor, fontWeight: 700, lineHeight: 1 }}>
+                                        {d.toLocaleString(locale === 'ar' ? 'ar' : locale === 'ru' ? 'ru' : 'en', { month: 'short' })}
+                                    </span>
+                                    <span style={{ fontSize: '18px', fontWeight: 800, color: cfg.dateColor, lineHeight: 1.1 }}>
+                                        {d.getDate()}
+                                    </span>
+                                </div>
+                                <div>
+                                    <h3 style={{ fontSize: '14px', fontWeight: 700, color: 'rgba(255,255,255,0.9)', margin: 0 }}>
+                                        {getName(event)}
+                                    </h3>
+                                    <p style={{ fontSize: '11px', color: 'rgba(255,255,255,0.4)', margin: 0, fontWeight: 500 }}>
+                                        {getHijri(event)}
+                                    </p>
+                                </div>
                             </div>
 
-                            <div>
-                                <h3 className="font-bold text-lg dark:text-neutral-100">{event.name}</h3>
-                                <p className="text-sm text-neutral-500 dark:text-neutral-400 font-medium">{event.hijri}</p>
-                            </div>
-                        </div>
-
-                        {/* Countdown or status could go here */}
-                        <div className={`text-xs font-semibold px-3 py-1 rounded-full 
-                        ${event.type === 'festival' ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300' :
-                                event.type === 'major' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300' :
-                                    'bg-white dark:bg-black/20 text-neutral-500'}
-                        `}>
-                            {event.type === 'festival' ? '🎉 Festival' : event.type === 'major' ? '⭐ Major' : '📅 Event'}
-                        </div>
-                    </motion.div>
-                ))}
+                            <span style={{
+                                fontSize: '10px', fontWeight: 700, padding: '3px 8px',
+                                borderRadius: '20px', background: cfg.badgeBg, color: cfg.badgeColor,
+                                whiteSpace: 'nowrap',
+                            }}>
+                                {cfg.badge} {getTypeLabel(event.type)}
+                            </span>
+                        </motion.div>
+                    );
+                })}
             </div>
         </div>
     );

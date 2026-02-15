@@ -5,8 +5,48 @@ import { useI18n } from '@/contexts/I18nContext';
 import { getPrayerTimes, getNextPrayer, getTimeRemaining, formatTime, getQiblaDirection, PrayerTimeResult } from '@/lib/prayer';
 import styles from './Prayer.module.css';
 
+/* ─── Nawafil (Sunnah prayers) data ─── */
+const NAWAFIL_DATA = [
+    { prayer: 'fajr', before: 2, after: 0 },
+    { prayer: 'dhuhr', before: 4, after: 2 },
+    { prayer: 'asr', before: 4, after: 0 },
+    { prayer: 'maghrib', before: 0, after: 2 },
+    { prayer: 'isha', before: 0, after: 2 },
+];
+
+function getTodayKey() {
+    return new Date().toISOString().slice(0, 10);
+}
+
+function loadNawafilChecks(): Record<string, boolean> {
+    if (typeof window === 'undefined') return {};
+    try {
+        const raw = localStorage.getItem('nawafil_checks');
+        if (!raw) return {};
+        const data = JSON.parse(raw);
+        if (data._date !== getTodayKey()) return {}; // reset daily
+        return data;
+    } catch { return {}; }
+}
+
+function saveNawafilChecks(checks: Record<string, boolean>) {
+    localStorage.setItem('nawafil_checks', JSON.stringify({ ...checks, _date: getTodayKey() }));
+    // Also save to nawafil_history for stats page
+    const today = getTodayKey();
+    let completed = 0;
+    Object.entries(checks).forEach(([key, val]) => {
+        if (key !== '_date' && val) completed++;
+    });
+    try {
+        const raw = localStorage.getItem('nawafil_history');
+        const history = raw ? JSON.parse(raw) : {};
+        history[today] = completed;
+        localStorage.setItem('nawafil_history', JSON.stringify(history));
+    } catch { /* ignore */ }
+}
+
 export default function PrayerPage() {
-    const { t } = useI18n();
+    const { t, locale } = useI18n();
     const [tab, setTab] = useState<'times' | 'qibla'>('times');
     const [location, setLocation] = useState<{ lat: number; lng: number } | null>(null);
     const [prayerTimes, setPrayerTimes] = useState<PrayerTimeResult | null>(null);
@@ -15,18 +55,29 @@ export default function PrayerPage() {
     const [qiblaAngle, setQiblaAngle] = useState(0);
     const [compassHeading, setCompassHeading] = useState(0);
     const [locationError, setLocationError] = useState(false);
-    // Added loading state to prevent flash of empty content
     const [loading, setLoading] = useState(true);
+    const [nawafilChecks, setNawafilChecks] = useState<Record<string, boolean>>({});
+
+    useEffect(() => {
+        setNawafilChecks(loadNawafilChecks());
+    }, []);
+
+    const toggleNawafil = useCallback((key: string) => {
+        setNawafilChecks(prev => {
+            const next = { ...prev, [key]: !prev[key] };
+            saveNawafilChecks(next);
+            return next;
+        });
+    }, []);
 
     const requestLocation = useCallback(() => {
-        // Try to load cached location first
         const cached = localStorage.getItem('prayer_location');
         if (cached) {
             try {
                 const parsed = JSON.parse(cached);
                 if (parsed.lat && parsed.lng) {
                     setLocation(parsed);
-                    setLoading(false); // Can show cached while updating
+                    setLoading(false);
                 }
             } catch (e) {
                 console.error('Failed to parse cached location');
@@ -49,7 +100,7 @@ export default function PrayerPage() {
             },
             (err) => {
                 console.error('Geolocation error:', err);
-                if (!location) { // Only show error if no cached location
+                if (!location) {
                     setLocationError(true);
                 }
                 setLoading(false);
@@ -64,12 +115,10 @@ export default function PrayerPage() {
 
     useEffect(() => {
         if (!location) return;
-
         try {
             const times = getPrayerTimes(location.lat, location.lng);
             setPrayerTimes(times);
             setQiblaAngle(getQiblaDirection(location.lat, location.lng));
-
             const next = getNextPrayer(times, location.lat, location.lng);
             setNextPrayer(next);
         } catch (e) {
@@ -79,9 +128,7 @@ export default function PrayerPage() {
 
     useEffect(() => {
         if (!nextPrayer) return;
-        // Update immediately
         setCountdown(getTimeRemaining(nextPrayer.time));
-
         const timer = setInterval(() => {
             setCountdown(getTimeRemaining(nextPrayer.time));
         }, 1000);
@@ -94,16 +141,10 @@ export default function PrayerPage() {
 
         const handleOrientation = (e: DeviceOrientationEvent) => {
             if (e.alpha !== null) {
-                // Invert alpha for CSS rotation (which is clockwise) vs compass heading
-                // But alpha is 0 at North and increases counter-clockwise on some devices?
-                // Standard: alpha 0 = North, increases counter-clockwise.
-                // CSS rotate: increases clockwise.
-                // So -alpha is correct.
                 setCompassHeading(e.alpha);
             }
         };
 
-        // Try requesting permission on iOS
         if (typeof (DeviceOrientationEvent as any).requestPermission === 'function') {
             (DeviceOrientationEvent as any).requestPermission().then((response: string) => {
                 if (response === 'granted') {
@@ -153,6 +194,10 @@ export default function PrayerPage() {
             { key: 'isha', label: t('prayer.isha'), time: prayerTimes.isha, emoji: '🌃' },
         ]
         : [];
+
+    // Count total nawafil completed today
+    const nawafilCompleted = Object.entries(nawafilChecks).filter(([k, v]) => k !== '_date' && v).length;
+    const nawafilTotal = NAWAFIL_DATA.reduce((s, n) => s + (n.before > 0 ? 1 : 0) + (n.after > 0 ? 1 : 0), 0);
 
     return (
         <div className="page-wrapper">
@@ -206,6 +251,158 @@ export default function PrayerPage() {
                                 </div>
                             ))}
                         </div>
+
+                        {/* ── Nawafil (Sunnah Prayers) Tracker ── */}
+                        <div style={{
+                            marginTop: '20px',
+                            background: 'rgba(255,255,255,0.03)',
+                            border: '1px solid rgba(255,255,255,0.06)',
+                            borderRadius: '16px',
+                            padding: '16px',
+                            backdropFilter: 'blur(12px)',
+                        }}>
+                            <div style={{
+                                display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                                marginBottom: '14px',
+                            }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                    <div style={{
+                                        width: '32px', height: '32px', borderRadius: '8px',
+                                        background: 'rgba(251,191,36,0.12)', display: 'flex',
+                                        alignItems: 'center', justifyContent: 'center',
+                                    }}>
+                                        <span style={{ fontSize: '16px' }}>🌟</span>
+                                    </div>
+                                    <div>
+                                        <div style={{
+                                            fontSize: '14px', fontWeight: 800,
+                                            background: 'linear-gradient(135deg, #fbbf24, #f59e0b)',
+                                            WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
+                                        }}>
+                                            {t('prayer.nawafil') || 'السنن الرواتب'}
+                                        </div>
+                                    </div>
+                                </div>
+                                <div style={{
+                                    fontSize: '12px', fontWeight: 700, color: '#fbbf24',
+                                    background: 'rgba(251,191,36,0.1)', padding: '4px 10px',
+                                    borderRadius: '20px',
+                                }}>
+                                    {nawafilCompleted}/{nawafilTotal}
+                                </div>
+                            </div>
+
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                                {NAWAFIL_DATA.map((item) => {
+                                    const prayerLabel = t(`prayer.${item.prayer}`);
+                                    const beforeKey = `${item.prayer}_before`;
+                                    const afterKey = `${item.prayer}_after`;
+                                    const beforeDone = nawafilChecks[beforeKey];
+                                    const afterDone = nawafilChecks[afterKey];
+
+                                    return (
+                                        <div key={item.prayer} style={{
+                                            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                                            padding: '10px 14px', borderRadius: '12px',
+                                            background: 'rgba(255,255,255,0.02)',
+                                            border: '1px solid rgba(255,255,255,0.04)',
+                                        }}>
+                                            <span style={{
+                                                fontSize: '13px', fontWeight: 700,
+                                                color: 'rgba(255,255,255,0.8)', minWidth: '60px',
+                                            }}>
+                                                {prayerLabel}
+                                            </span>
+
+                                            <div style={{ display: 'flex', gap: '8px' }}>
+                                                {item.before > 0 && (
+                                                    <button
+                                                        onClick={() => toggleNawafil(beforeKey)}
+                                                        style={{
+                                                            display: 'flex', alignItems: 'center', gap: '4px',
+                                                            padding: '5px 10px', borderRadius: '20px',
+                                                            border: beforeDone
+                                                                ? '1px solid rgba(16,185,129,0.4)'
+                                                                : '1px solid rgba(255,255,255,0.1)',
+                                                            background: beforeDone
+                                                                ? 'rgba(16,185,129,0.12)'
+                                                                : 'rgba(255,255,255,0.03)',
+                                                            cursor: 'pointer',
+                                                            fontFamily: 'inherit',
+                                                            transition: 'all 0.2s',
+                                                        }}
+                                                    >
+                                                        <span style={{
+                                                            width: '14px', height: '14px', borderRadius: '4px',
+                                                            border: beforeDone
+                                                                ? '2px solid #10b981'
+                                                                : '2px solid rgba(255,255,255,0.2)',
+                                                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                                            background: beforeDone ? '#10b981' : 'transparent',
+                                                            transition: 'all 0.2s',
+                                                        }}>
+                                                            {beforeDone && <span style={{ color: '#fff', fontSize: '10px', fontWeight: 900 }}>✓</span>}
+                                                        </span>
+                                                        <span style={{
+                                                            fontSize: '11px', fontWeight: 700,
+                                                            color: beforeDone ? '#34d399' : 'rgba(255,255,255,0.4)',
+                                                        }}>
+                                                            ↑ {item.before} {t('prayer.before') || locale === 'ar' ? 'قبل' : 'Before'}
+                                                        </span>
+                                                    </button>
+                                                )}
+
+                                                {item.after > 0 && (
+                                                    <button
+                                                        onClick={() => toggleNawafil(afterKey)}
+                                                        style={{
+                                                            display: 'flex', alignItems: 'center', gap: '4px',
+                                                            padding: '5px 10px', borderRadius: '20px',
+                                                            border: afterDone
+                                                                ? '1px solid rgba(251,191,36,0.4)'
+                                                                : '1px solid rgba(255,255,255,0.1)',
+                                                            background: afterDone
+                                                                ? 'rgba(251,191,36,0.12)'
+                                                                : 'rgba(255,255,255,0.03)',
+                                                            cursor: 'pointer',
+                                                            fontFamily: 'inherit',
+                                                            transition: 'all 0.2s',
+                                                        }}
+                                                    >
+                                                        <span style={{
+                                                            width: '14px', height: '14px', borderRadius: '4px',
+                                                            border: afterDone
+                                                                ? '2px solid #fbbf24'
+                                                                : '2px solid rgba(255,255,255,0.2)',
+                                                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                                            background: afterDone ? '#fbbf24' : 'transparent',
+                                                            transition: 'all 0.2s',
+                                                        }}>
+                                                            {afterDone && <span style={{ color: '#000', fontSize: '10px', fontWeight: 900 }}>✓</span>}
+                                                        </span>
+                                                        <span style={{
+                                                            fontSize: '11px', fontWeight: 700,
+                                                            color: afterDone ? '#fbbf24' : 'rgba(255,255,255,0.4)',
+                                                        }}>
+                                                            ↓ {item.after} {t('prayer.after') || locale === 'ar' ? 'بعد' : 'After'}
+                                                        </span>
+                                                    </button>
+                                                )}
+
+                                                {item.before === 0 && item.after === 0 && (
+                                                    <span style={{
+                                                        fontSize: '11px', color: 'rgba(255,255,255,0.25)',
+                                                        fontStyle: 'italic',
+                                                    }}>
+                                                        {t('prayer.optional') || 'Optional'}
+                                                    </span>
+                                                )}
+                                            </div>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        </div>
                     </div>
                 )}
 
@@ -216,17 +413,14 @@ export default function PrayerPage() {
                                 className={styles.compass}
                                 style={{ transform: `rotate(${-compassHeading}deg)` }}
                             >
-                                {/* Compass ring */}
                                 <svg viewBox="0 0 200 200" className={styles.compassSvg}>
                                     <circle cx="100" cy="100" r="95" fill="none" stroke="var(--border-color)" strokeWidth="2" />
                                     <circle cx="100" cy="100" r="80" fill="none" stroke="var(--border-color)" strokeWidth="1" strokeDasharray="4 4" />
-                                    {/* Cardinal markers */}
                                     <text x="100" y="20" textAnchor="middle" fill="var(--danger)" fontSize="14" fontWeight="700">N</text>
                                     <text x="185" y="105" textAnchor="middle" fill="var(--text-tertiary)" fontSize="12">E</text>
                                     <text x="100" y="192" textAnchor="middle" fill="var(--text-tertiary)" fontSize="12">S</text>
                                     <text x="15" y="105" textAnchor="middle" fill="var(--text-tertiary)" fontSize="12">W</text>
                                 </svg>
-                                {/* Qibla needle */}
                                 <div
                                     className={styles.qiblaNeedle}
                                     style={{ transform: `rotate(${qiblaAngle}deg)` }}
