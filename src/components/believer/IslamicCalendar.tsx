@@ -18,43 +18,43 @@ interface IslamicEvent {
 
 const ISLAMIC_EVENTS: IslamicEvent[] = [
     {
-        nameEn: 'Ramadan Start', nameAr: 'بداية رمضان', nameRu: 'Начало Рамадана',
+        nameEn: 'ramadanStart', nameAr: 'ramadanStart', nameRu: 'ramadanStart',
         date: '2026-02-18',
         hijriEn: 'Ramadan 1447 1', hijriAr: '١ رمضان ١٤٤٧', hijriRu: 'Рамадан 1447 1',
         type: 'major',
     },
     {
-        nameEn: 'Laylat al-Qadr', nameAr: 'ليلة القدر', nameRu: 'Ночь Предопределения',
+        nameEn: 'laylatAlQadr', nameAr: 'laylatAlQadr', nameRu: 'laylatAlQadr',
         date: '2026-03-15',
         hijriEn: 'Ramadan 1447 27', hijriAr: '٢٧ رمضان ١٤٤٧', hijriRu: 'Рамадан 1447 27',
         type: 'major',
     },
     {
-        nameEn: 'Eid al-Fitr', nameAr: 'عيد الفطر', nameRu: 'Ураза-байрам',
+        nameEn: 'eidAlFitr', nameAr: 'eidAlFitr', nameRu: 'eidAlFitr',
         date: '2026-03-19',
         hijriEn: 'Shawwal 1447 1', hijriAr: '١ شوال ١٤٤٧', hijriRu: 'Шавваль 1447 1',
         type: 'festival',
     },
     {
-        nameEn: 'Day of Arafah', nameAr: 'يوم عرفة', nameRu: 'День Арафата',
+        nameEn: 'arafah', nameAr: 'arafah', nameRu: 'arafah',
         date: '2026-05-26',
         hijriEn: 'Dhu al-Hijjah 1447 9', hijriAr: '٩ ذو الحجة ١٤٤٧', hijriRu: 'Зуль-хиджа 1447 9',
         type: 'major',
     },
     {
-        nameEn: 'Eid al-Adha', nameAr: 'عيد الأضحى', nameRu: 'Курбан-байрам',
+        nameEn: 'eidAlAdha', nameAr: 'eidAlAdha', nameRu: 'eidAlAdha',
         date: '2026-05-27',
         hijriEn: 'Dhu al-Hijjah 1447 10', hijriAr: '١٠ ذو الحجة ١٤٤٧', hijriRu: 'Зуль-хиджа 1447 10',
         type: 'festival',
     },
     {
-        nameEn: 'Islamic New Year', nameAr: 'رأس السنة الهجرية', nameRu: 'Исламский Новый год',
+        nameEn: 'islamicNewYear', nameAr: 'islamicNewYear', nameRu: 'islamicNewYear',
         date: '2026-06-16',
         hijriEn: 'Muharram 1448 1', hijriAr: '١ محرم ١٤٤٨', hijriRu: 'Мухаррам 1448 1',
         type: 'regular',
     },
     {
-        nameEn: 'Ashura', nameAr: 'عاشوراء', nameRu: 'Ашура',
+        nameEn: 'ashura', nameAr: 'ashura', nameRu: 'ashura',
         date: '2026-06-25',
         hijriEn: 'Muharram 1448 10', hijriAr: '١٠ محرم ١٤٤٨', hijriRu: 'Мухаррам 1448 10',
         type: 'regular',
@@ -101,9 +101,7 @@ export function IslamicCalendar() {
     const { t, locale } = useI18n();
 
     const getName = (event: IslamicEvent) => {
-        if (locale === 'ar') return event.nameAr;
-        if (locale === 'ru') return event.nameRu;
-        return event.nameEn;
+        return t(`calendar.${event.nameEn}`);
     };
 
     const getHijri = (event: IslamicEvent) => {
@@ -138,7 +136,7 @@ export function IslamicCalendar() {
                     background: 'linear-gradient(135deg, #818cf8, #a78bfa)',
                     WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
                 }}>
-                    {t('believer.calendar') || 'Islamic Calendar'}
+                    {t('calendar.title')}
                 </h2>
             </div>
 

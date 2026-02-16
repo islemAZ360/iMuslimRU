@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useState, useRef, useCallback } from 'react';
+import React, { useState, useRef, useCallback, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { useI18n } from '@/contexts/I18nContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { useSettings } from '@/contexts/SettingsContext';
@@ -9,7 +10,7 @@ import styles from './Health.module.css';
 
 export default function HealthPage() {
     const { t, locale } = useI18n();
-    const { healthProfile } = useAuth();
+    const { healthProfile, user, loading } = useAuth();
     const { geminiApiKey, hasGeminiKey, geminiModel } = useSettings();
     const [analyzing, setAnalyzing] = useState(false);
     const [result, setResult] = useState<string | null>(null);
@@ -56,6 +57,15 @@ export default function HealthPage() {
         };
         reader.readAsDataURL(file);
     }, [handleAnalyze]);
+
+    const router = useRouter(); // Add useRouter hook
+
+    // Redirect if health profile is missing
+    useEffect(() => {
+        if (!loading && user && (!healthProfile || (!healthProfile.height && !healthProfile.weight))) {
+            router.push('/profile?onboarding=true');
+        }
+    }, [user, loading, healthProfile, router]);
 
     if (!hasGeminiKey) {
         return (

@@ -50,6 +50,16 @@ export default function LoginPage() {
 
     return (
         <div className={styles.loginPage}>
+            {/* Floating particles */}
+            <div className={styles.particles}>
+                <span className={styles.particle} />
+                <span className={styles.particle} />
+                <span className={styles.particle} />
+                <span className={styles.particle} />
+                <span className={styles.particle} />
+                <span className={styles.particle} />
+            </div>
+
             <div className={styles.loginContainer}>
                 {/* Logo */}
                 <div className={styles.logo}>

@@ -50,8 +50,8 @@ export function ZakatCalculator() {
         {
             id: 'savings' as ZakatType,
             icon: <IconCash size={22} />,
-            label: t('zakat.savings') || 'Savings & Cash',
-            desc: '2.5% of total savings held for a lunar year',
+            label: t('zakat.savings'),
+            desc: t('zakat.savingsDesc'),
             gradient: 'linear-gradient(135deg, rgba(59,130,246,0.15), rgba(59,130,246,0.05))',
             borderColor: 'rgba(59,130,246,0.25)',
             iconBg: 'rgba(59,130,246,0.15)',
@@ -60,8 +60,8 @@ export function ZakatCalculator() {
         {
             id: 'gold' as ZakatType,
             icon: <IconDiamond size={22} />,
-            label: t('zakat.gold') || 'Gold',
-            desc: `2.5% if exceeds ${NISAB_GOLD_GRAMS}g`,
+            label: t('zakat.gold'),
+            desc: t('zakat.goldDesc'),
             gradient: 'linear-gradient(135deg, rgba(251,191,36,0.15), rgba(251,191,36,0.05))',
             borderColor: 'rgba(251,191,36,0.25)',
             iconBg: 'rgba(251,191,36,0.15)',
@@ -70,8 +70,8 @@ export function ZakatCalculator() {
         {
             id: 'silver' as ZakatType,
             icon: <IconCircles size={22} />,
-            label: t('zakat.silver') || 'Silver',
-            desc: '2.5% if exceeds 595g',
+            label: t('zakat.silver'),
+            desc: t('zakat.silverDesc'),
             gradient: 'linear-gradient(135deg, rgba(148,163,184,0.15), rgba(148,163,184,0.05))',
             borderColor: 'rgba(148,163,184,0.25)',
             iconBg: 'rgba(148,163,184,0.15)',
@@ -80,8 +80,8 @@ export function ZakatCalculator() {
         {
             id: 'fitr' as ZakatType,
             icon: <IconUsers size={22} />,
-            label: t('zakat.fitr') || 'Zakat al-Fitr',
-            desc: 'Per-person amount before Eid prayer',
+            label: t('zakat.fitr'),
+            desc: t('zakat.fitrDesc'),
             gradient: 'linear-gradient(135deg, rgba(16,185,129,0.15), rgba(16,185,129,0.05))',
             borderColor: 'rgba(16,185,129,0.25)',
             iconBg: 'rgba(16,185,129,0.15)',
@@ -110,7 +110,7 @@ export function ZakatCalculator() {
                     background: 'linear-gradient(135deg, #34d399, #06b6d4)',
                     WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
                 }}>
-                    {t('believer.zakatCalculator') || 'Zakat Calculator'}
+                    {t('zakat.title')}
                 </h2>
             </div>
 
@@ -176,11 +176,11 @@ export function ZakatCalculator() {
                                 background: 'none', border: 'none', color: 'rgba(255,255,255,0.5)',
                                 cursor: 'pointer', display: 'flex', alignItems: 'center', fontSize: '13px', padding: 0,
                             }}>
-                                <IconChevronLeft size={16} /> {t('common.back') || 'Back'}
+                                <IconChevronLeft size={16} /> {t('common.back')}
                             </button>
                             <div>
                                 <label style={{ fontSize: '12px', fontWeight: 600, color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                                    {type === 'fitr' ? 'Number of People' : 'Total Amount'}
+                                    {type === 'fitr' ? t('zakat.numberOfPeople') : t('zakat.totalAmount')}
                                 </label>
                                 <div style={{ position: 'relative', marginTop: '8px' }}>
                                     <input
@@ -210,7 +210,7 @@ export function ZakatCalculator() {
                                     background: 'rgba(16,185,129,0.06)', fontSize: '11px', color: 'rgba(255,255,255,0.4)',
                                 }}>
                                     <IconInfoCircle size={14} style={{ flexShrink: 0, marginTop: '1px' }} />
-                                    <span>{t('zakat.hawlNote') || 'Ensure this has been held for one complete lunar year (Hawl).'}</span>
+                                    <span>{t('zakat.hawlNote')}</span>
                                 </div>
                             </div>
                             <button
@@ -225,7 +225,7 @@ export function ZakatCalculator() {
                                     boxShadow: amount ? '0 4px 16px rgba(5,150,105,0.3)' : 'none',
                                 }}
                             >
-                                {t('zakat.calculate') || 'Calculate Zakat'}
+                                {t('zakat.calculate')}
                             </button>
                         </motion.div>
                     )}
@@ -239,7 +239,7 @@ export function ZakatCalculator() {
                             style={{ textAlign: 'center', padding: '16px 0' }}
                         >
                             <p style={{ fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1.5px', color: 'rgba(255,255,255,0.4)', marginBottom: '8px' }}>
-                                {t('zakat.payable') || 'Zakat Payable'}
+                                {t('zakat.payable')}
                             </p>
                             <div style={{ fontSize: '48px', fontWeight: 900, lineHeight: 1, marginBottom: '4px' }}>
                                 <span style={{ background: 'linear-gradient(135deg, #34d399, #06b6d4)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
@@ -253,14 +253,14 @@ export function ZakatCalculator() {
                                 border: '1px solid rgba(16,185,129,0.12)',
                                 fontSize: '12px', color: 'rgba(52,211,153,0.8)', lineHeight: 1.4,
                             }}>
-                                {t('zakat.distribution') || 'Distribute to the 8 categories of recipients from the Quran.'}
+                                {t('zakat.distribution')}
                             </div>
                             <button onClick={reset} style={{
                                 marginTop: '16px', padding: '10px 24px', borderRadius: '20px',
                                 background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.08)',
                                 color: 'rgba(255,255,255,0.6)', fontSize: '13px', fontWeight: 600, cursor: 'pointer',
                             }}>
-                                {t('zakat.calculateAgain') || 'Calculate Another'}
+                                {t('zakat.calculateAgain')}
                             </button>
                         </motion.div>
                     )}

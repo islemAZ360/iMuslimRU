@@ -6,18 +6,22 @@ import { ThemeProvider } from '@/contexts/ThemeContext';
 import { I18nProvider } from '@/contexts/I18nContext';
 import { AuthProvider } from '@/contexts/AuthContext';
 import { SettingsProvider } from '@/contexts/SettingsContext';
+import { useI18n } from '@/contexts/I18nContext';
 import { FloatingDock } from '@/components/ui/floating-dock';
 import {
     IconHome,
     IconBuildingMosque,
-    IconBarcode,
+    IconScan,
     IconMoon,
     IconChartDonut3,
     IconSettings,
+    IconMoonStars,
+    IconHeartRateMonitor,
 } from '@tabler/icons-react';
 
 function DockNavigation() {
     const pathname = usePathname();
+    const { t } = useI18n();
 
     // Hide dock on login/register pages
     if (pathname === '/login' || pathname === '/register') return null;
@@ -39,32 +43,37 @@ function DockNavigation() {
                 <FloatingDock
                     items={[
                         {
-                            title: 'Home',
+                            title: t('nav.home') || 'Home',
                             icon: <IconHome style={{ width: '100%', height: '100%', color: '#6ee7b7' }} />,
                             href: '/',
                         },
                         {
-                            title: 'Prayer',
+                            title: t('nav.prayer') || 'Prayer',
                             icon: <IconBuildingMosque style={{ width: '100%', height: '100%', color: '#6ee7b7' }} />,
                             href: '/prayer',
                         },
                         {
-                            title: 'Scanner',
-                            icon: <IconBarcode style={{ width: '100%', height: '100%', color: '#6ee7b7' }} />,
+                            title: t('nav.ramadan') || 'Ramadan',
+                            icon: <IconMoonStars style={{ width: '100%', height: '100%', color: '#6ee7b7' }} />,
+                            href: '/ramadan',
+                        },
+                        {
+                            title: t('nav.scanner') || 'Scanner',
+                            icon: <IconScan style={{ width: '100%', height: '100%', color: '#6ee7b7' }} />,
                             href: '/scanner',
                         },
                         {
-                            title: 'Believer',
+                            title: t('nav.believer') || 'Believer',
                             icon: <IconMoon style={{ width: '100%', height: '100%', color: '#6ee7b7' }} />,
                             href: '/believer',
                         },
                         {
-                            title: 'Stats',
-                            icon: <IconChartDonut3 style={{ width: '100%', height: '100%', color: '#6ee7b7' }} />,
-                            href: '/stats',
+                            title: t('nav.health') || 'Health',
+                            icon: <IconHeartRateMonitor style={{ width: '100%', height: '100%', color: '#6ee7b7' }} />,
+                            href: '/health',
                         },
                         {
-                            title: 'Settings',
+                            title: t('nav.settings') || 'Settings',
                             icon: <IconSettings style={{ width: '100%', height: '100%', color: '#6ee7b7' }} />,
                             href: '/settings',
                         },

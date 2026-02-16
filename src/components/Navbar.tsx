@@ -1,16 +1,19 @@
 'use client';
 
 import React from 'react';
+import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useI18n } from '@/contexts/I18nContext';
-import { FloatingDock } from '@/components/ui/floating-dock';
 import {
     IconHome,
-    IconScan, // Using generic names, will map to tabler icons
+    IconScan,
     IconHeartRateMonitor,
     IconSettings,
-    IconBuildingMosque, // For prayer
+    IconBuildingMosque,
+    IconMoonStars,
+    IconLayoutGrid, // For Believer page if added
 } from '@tabler/icons-react';
+import styles from './Navbar.module.css';
 
 export default function Navbar() {
     const pathname = usePathname();
@@ -19,52 +22,63 @@ export default function Navbar() {
     // Don't show navbar on login page
     if (pathname === '/login' || pathname === '/register') return null;
 
-    // Map content to Floating Dock format
     const links = [
         {
             title: t('nav.home') || 'Home',
-            icon: (
-                <IconHome className="h-full w-full text-neutral-500 dark:text-neutral-300" />
-            ),
+            icon: <IconHome size={22} />,
             href: '/',
         },
         {
             title: t('nav.prayer') || 'Prayer',
-            icon: (
-                <IconBuildingMosque className="h-full w-full text-neutral-500 dark:text-neutral-300" />
-            ),
+            icon: <IconBuildingMosque size={22} />,
             href: '/prayer',
         },
         {
+            title: t('nav.ramadan') || 'Ramadan',
+            icon: <IconMoonStars size={22} />,
+            href: '/ramadan',
+        },
+        {
+            title: t('nav.believer') || 'Believer',
+            icon: <IconLayoutGrid size={22} />, // Using LayoutGrid for "Believer" dashboard feel
+            href: '/believer',
+        },
+        {
             title: t('nav.scanner') || 'Scanner',
-            icon: (
-                <IconScan className="h-full w-full text-neutral-500 dark:text-neutral-300" />
-            ),
+            icon: <IconScan size={22} />,
             href: '/scanner',
         },
         {
             title: t('nav.health') || 'Health',
-            icon: (
-                <IconHeartRateMonitor className="h-full w-full text-neutral-500 dark:text-neutral-300" />
-            ),
+            icon: <IconHeartRateMonitor size={22} />,
             href: '/health',
         },
+        // Settings moved to top right usually, but if needed in dock:
         {
             title: t('nav.settings') || 'Settings',
-            icon: (
-                <IconSettings className="h-full w-full text-neutral-500 dark:text-neutral-300" />
-            ),
+            icon: <IconSettings size={22} />,
             href: '/settings',
         },
     ];
 
-    // FloatingDock expects to be in a container usually, but here it acts as fixed nav
-    // We need to position it at the bottom.
     return (
-        <div className="fixed bottom-4 left-0 right-0 z-50 flex justify-center">
-            <FloatingDock
-                items={links}
-            />
-        </div>
+        <nav className={styles.navbar}>
+            {links.map((item) => {
+                const isActive = pathname === item.href;
+                return (
+                    <Link
+                        key={item.href}
+                        href={item.href}
+                        className={`${styles.navItem} ${isActive ? styles.active : ''}`}
+                    >
+                        <div className={styles.iconWrapper}>
+                            {item.icon}
+                        </div>
+                        <span className={styles.activeDot} />
+                        <span className={styles.tooltip}>{item.title}</span>
+                    </Link>
+                );
+            })}
+        </nav>
     );
 }

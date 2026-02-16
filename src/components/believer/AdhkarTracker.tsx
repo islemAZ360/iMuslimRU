@@ -33,64 +33,6 @@ interface AdhkarCategory {
     adhkar: Dhikr[];
 }
 
-const ADHKAR_CATEGORIES: AdhkarCategory[] = [
-    {
-        id: 'morning',
-        name: 'Morning Adhkar',
-        nameAr: 'أذكار الصباح',
-        icon: <IconSunrise size={20} />,
-        color: '#f59e0b',
-        adhkar: [
-            { id: 'm1', arabic: 'أَصْبَحْنَا وَأَصْبَحَ الْمُلْكُ لِلَّهِ', translation: 'We have entered morning and all sovereignty belongs to Allah', target: 1 },
-            { id: 'm2', arabic: 'سُبْحَانَ اللَّهِ وَبِحَمْدِهِ', translation: 'Glory be to Allah and all praise is due to Him', target: 100 },
-            { id: 'm3', arabic: 'لَا إِلَهَ إِلَّا اللَّهُ وَحْدَهُ لَا شَرِيكَ لَهُ', translation: 'There is no god but Allah alone, with no partner', target: 10 },
-            { id: 'm4', arabic: 'اللَّهُمَّ إِنِّي أَسْأَلُكَ الْعَافِيَةَ فِي الدُّنْيَا وَالآخِرَةِ', translation: 'O Allah, I ask You for well-being in this world and the next', target: 3 },
-            { id: 'm5', arabic: 'بِسْمِ اللَّهِ الَّذِي لَا يَضُرُّ مَعَ اسْمِهِ شَيْءٌ', translation: 'In the Name of Allah with whose Name nothing can harm', target: 3 },
-            { id: 'm6', arabic: 'أَعُوذُ بِكَلِمَاتِ اللَّهِ التَّامَّاتِ مِنْ شَرِّ مَا خَلَقَ', translation: 'I seek refuge in the perfect words of Allah from the evil of what He has created', target: 3 },
-        ],
-    },
-    {
-        id: 'evening',
-        name: 'Evening Adhkar',
-        nameAr: 'أذكار المساء',
-        icon: <IconSunset size={20} />,
-        color: '#8b5cf6',
-        adhkar: [
-            { id: 'e1', arabic: 'أَمْسَيْنَا وَأَمْسَى الْمُلْكُ لِلَّهِ', translation: 'We have entered evening and all sovereignty belongs to Allah', target: 1 },
-            { id: 'e2', arabic: 'سُبْحَانَ اللَّهِ وَبِحَمْدِهِ', translation: 'Glory be to Allah and all praise is due to Him', target: 100 },
-            { id: 'e3', arabic: 'لَا إِلَهَ إِلَّا اللَّهُ وَحْدَهُ لَا شَرِيكَ لَهُ', translation: 'There is no god but Allah alone, with no partner', target: 10 },
-            { id: 'e4', arabic: 'اللَّهُمَّ إِنِّي أَعُوذُ بِكَ مِنَ الْهَمِّ وَالْحَزَنِ', translation: 'O Allah, I seek refuge in You from worry and grief', target: 3 },
-        ],
-    },
-    {
-        id: 'afterPrayer',
-        name: 'After Prayer',
-        nameAr: 'أذكار بعد الصلاة',
-        icon: <IconPray size={20} />,
-        color: '#10b981',
-        adhkar: [
-            { id: 'p1', arabic: 'أَسْتَغْفِرُ اللَّهَ', translation: 'I seek forgiveness from Allah', target: 3 },
-            { id: 'p2', arabic: 'سُبْحَانَ اللَّهِ', translation: 'Glory be to Allah', target: 33 },
-            { id: 'p3', arabic: 'الْحَمْدُ لِلَّهِ', translation: 'All praise is due to Allah', target: 33 },
-            { id: 'p4', arabic: 'اللَّهُ أَكْبَرُ', translation: 'Allah is the Greatest', target: 34 },
-            { id: 'p5', arabic: 'لَا إِلَهَ إِلَّا اللَّهُ وَحْدَهُ لَا شَرِيكَ لَهُ', translation: 'There is no god but Allah alone, He has no partner', target: 1 },
-        ],
-    },
-    {
-        id: 'sleep',
-        name: 'Before Sleep',
-        nameAr: 'أذكار النوم',
-        icon: <IconMoon size={20} />,
-        color: '#3b82f6',
-        adhkar: [
-            { id: 's1', arabic: 'بِاسْمِكَ اللَّهُمَّ أَمُوتُ وَأَحْيَا', translation: 'In Your Name, O Allah, I die and I live', target: 1 },
-            { id: 's2', arabic: 'سُبْحَانَ اللَّهِ', translation: 'Glory be to Allah', target: 33 },
-            { id: 's3', arabic: 'الْحَمْدُ لِلَّهِ', translation: 'All praise is due to Allah', target: 33 },
-            { id: 's4', arabic: 'اللَّهُ أَكْبَرُ', translation: 'Allah is the Greatest', target: 34 },
-        ],
-    },
-];
-
 /* ─── Storage helpers ─── */
 
 function getTodayKey() {
@@ -120,13 +62,13 @@ function loadHistory(): Record<string, { total: number; categories: Record<strin
     } catch { return {}; }
 }
 
-function saveToHistory(counts: Record<string, number>) {
+function saveToHistory(counts: Record<string, number>, categoriesData: AdhkarCategory[]) {
     const today = getTodayKey();
     const history = loadHistory();
     let total = 0;
     const categories: Record<string, number> = {};
 
-    ADHKAR_CATEGORIES.forEach(cat => {
+    categoriesData.forEach(cat => {
         let catTotal = 0;
         cat.adhkar.forEach(d => {
             const c = counts[d.id] || 0;
@@ -147,6 +89,64 @@ export function AdhkarTracker() {
     const [counts, setCounts] = useState<Record<string, number>>({});
     const [openCategory, setOpenCategory] = useState<string | null>('morning');
 
+    const categories = React.useMemo<AdhkarCategory[]>(() => [
+        {
+            id: 'morning',
+            name: t('adhkar.morning'),
+            nameAr: t('adhkar.morning'),
+            icon: <IconSunrise size={20} />,
+            color: '#f59e0b',
+            adhkar: [
+                { id: 'm1', arabic: 'أَصْبَحْنَا وَأَصْبَحَ الْمُلْكُ لِلَّهِ', translation: t('adhkar.m1') || 'We have entered morning and all sovereignty belongs to Allah', target: 1 },
+                { id: 'm2', arabic: 'سُبْحَانَ اللَّهِ وَبِحَمْدِهِ', translation: t('adhkar.m2') || 'Glory be to Allah and all praise is due to Him', target: 100 },
+                { id: 'm3', arabic: 'لَا إِلَهَ إِلَّا اللَّهُ وَحْدَهُ لَا شَرِيكَ لَهُ', translation: t('adhkar.m3') || 'There is no god but Allah alone, with no partner', target: 10 },
+                { id: 'm4', arabic: 'اللَّهُمَّ إِنِّي أَسْأَلُكَ الْعَافِيَةَ فِي الدُّنْيَا وَالآخِرَةِ', translation: t('adhkar.m4') || 'O Allah, I ask You for well-being in this world and the next', target: 3 },
+                { id: 'm5', arabic: 'بِسْمِ اللَّهِ الَّذِي لَا يَضُرُّ مَعَ اسْمِهِ شَيْءٌ', translation: t('adhkar.m5') || 'In the Name of Allah with whose Name nothing can harm', target: 3 },
+                { id: 'm6', arabic: 'أَعُوذُ بِكَلِمَاتِ اللَّهِ التَّامَّاتِ مِنْ شَرِّ مَا خَلَقَ', translation: t('adhkar.m6') || 'I seek refuge in the perfect words of Allah from the evil of what He has created', target: 3 },
+            ],
+        },
+        {
+            id: 'evening',
+            name: t('adhkar.evening'),
+            nameAr: t('adhkar.evening'),
+            icon: <IconSunset size={20} />,
+            color: '#8b5cf6',
+            adhkar: [
+                { id: 'e1', arabic: 'أَمْسَيْنَا وَأَمْسَى الْمُلْكُ لِلَّهِ', translation: t('adhkar.e1') || 'We have entered evening and all sovereignty belongs to Allah', target: 1 },
+                { id: 'e2', arabic: 'سُبْحَانَ اللَّهِ وَبِحَمْدِهِ', translation: t('adhkar.e2') || 'Glory be to Allah and all praise is due to Him', target: 100 },
+                { id: 'e3', arabic: 'لَا إِلَهَ إِلَّا اللَّهُ وَحْدَهُ لَا شَرِيكَ لَهُ', translation: t('adhkar.e3') || 'There is no god but Allah alone, with no partner', target: 10 },
+                { id: 'e4', arabic: 'اللَّهُمَّ إِنِّي أَعُوذُ بِكَ مِنَ الْهَمِّ وَالْحَزَنِ', translation: t('adhkar.e4') || 'O Allah, I seek refuge in You from worry and grief', target: 3 },
+            ],
+        },
+        {
+            id: 'afterPrayer',
+            name: t('adhkar.prayer'),
+            nameAr: t('adhkar.prayer'),
+            icon: <IconPray size={20} />,
+            color: '#10b981',
+            adhkar: [
+                { id: 'p1', arabic: 'أَسْتَغْفِرُ اللَّهَ', translation: t('adhkar.astaghfirullah'), target: 3 },
+                { id: 'p2', arabic: 'سُبْحَانَ اللَّهِ', translation: t('adhkar.subhanAllah'), target: 33 },
+                { id: 'p3', arabic: 'الْحَمْدُ لِلَّهِ', translation: t('adhkar.alhamdulillah'), target: 33 },
+                { id: 'p4', arabic: 'اللَّهُ أَكْبَرُ', translation: t('adhkar.allahuAkbar'), target: 34 },
+                { id: 'p5', arabic: 'لَا إِلَهَ إِلَّا اللَّهُ وَحْدَهُ لَا شَرِيكَ لَهُ', translation: t('adhkar.laIlahaIllallah'), target: 1 },
+            ],
+        },
+        {
+            id: 'sleep',
+            name: t('adhkar.sleep'),
+            nameAr: t('adhkar.sleep'),
+            icon: <IconMoon size={20} />,
+            color: '#3b82f6',
+            adhkar: [
+                { id: 's1', arabic: 'بِاسْمِكَ اللَّهُمَّ أَمُوتُ وَأَحْيَا', translation: t('adhkar.s1') || 'In Your Name, O Allah, I die and I live', target: 1 },
+                { id: 's2', arabic: 'سُبْحَانَ اللَّهِ', translation: t('adhkar.subhanAllah'), target: 33 },
+                { id: 's3', arabic: 'الْحَمْدُ لِلَّهِ', translation: t('adhkar.alhamdulillah'), target: 33 },
+                { id: 's4', arabic: 'اللَّهُ أَكْبَرُ', translation: t('adhkar.allahuAkbar'), target: 34 },
+            ],
+        },
+    ], [t]);
+
     useEffect(() => {
         setCounts(loadCounts());
     }, []);
@@ -157,22 +157,22 @@ export function AdhkarTracker() {
             if (current >= target) return prev;
             const next = { ...prev, [dhikrId]: current + 1 };
             saveCounts(next);
-            saveToHistory(next);
+            saveToHistory(next, categories);
             return next;
         });
-    }, []);
+    }, [categories]);
 
     const resetCategory = useCallback((catId: string) => {
         setCounts(prev => {
-            const cat = ADHKAR_CATEGORIES.find(c => c.id === catId);
+            const cat = categories.find(c => c.id === catId);
             if (!cat) return prev;
             const next = { ...prev };
             cat.adhkar.forEach(d => { next[d.id] = 0; });
             saveCounts(next);
-            saveToHistory(next);
+            saveToHistory(next, categories);
             return next;
         });
-    }, []);
+    }, [categories]);
 
     const getCategoryProgress = (cat: AdhkarCategory) => {
         let done = 0, total = 0;
@@ -206,7 +206,7 @@ export function AdhkarTracker() {
                         background: 'linear-gradient(135deg, #fbbf24, #f59e0b)',
                         WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
                     }}>
-                        {t('believer.adhkarTracker') || 'Adhkar Tracker'}
+                        {t('adhkar.title')}
                     </h2>
                     <p style={{ fontSize: '11px', color: 'rgba(255,255,255,0.35)', margin: 0 }}>
                         سَبِّحِ اسْمَ رَبِّكَ الْأَعْلَى
@@ -216,7 +216,7 @@ export function AdhkarTracker() {
 
             {/* Categories */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                {ADHKAR_CATEGORIES.map((cat) => {
+                {categories.map((cat) => {
                     const prog = getCategoryProgress(cat);
                     const isOpen = openCategory === cat.id;
                     const isComplete = prog.pct >= 100;
@@ -388,7 +388,7 @@ export function AdhkarTracker() {
                                                     cursor: 'pointer', marginTop: '2px',
                                                 }}
                                             >
-                                                <IconRefresh size={12} /> Reset
+                                                <IconRefresh size={12} /> {t('adhkar.reset')}
                                             </button>
                                         </div>
                                     </motion.div>

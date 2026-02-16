@@ -1,5 +1,5 @@
 /* ========================================
-   Home Page — Ultra-Premium v3 Styles
+   Home Page — Ultra-Premium v4.0
    ======================================== */
 
 /* ---- Loading ---- */
@@ -176,14 +176,15 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: var(--space-5);
-    border-radius: var(--radius-2xl);
+    padding: var(--space-6);
+    border-radius: var(--radius-3xl);
     background: var(--gradient-card);
-    backdrop-filter: blur(40px) saturate(180%);
+    backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturation));
+    -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturation));
     border: 1px solid var(--border-color);
     margin-bottom: var(--space-5);
     cursor: pointer;
-    transition: all var(--transition-base);
+    transition: all var(--transition-spring);
     overflow: hidden;
     box-shadow: var(--shadow-card);
 }
@@ -202,7 +203,7 @@
 .nextPrayerCard:hover {
     border-color: var(--border-glow);
     box-shadow: var(--shadow-card), var(--shadow-glow-strong);
-    transform: translateY(-5px) scale(1.02);
+    transform: translateY(-3px) scale(1.01);
 }
 
 .nextPrayerCard:active {
@@ -281,15 +282,16 @@
     position: relative;
     display: flex;
     align-items: center;
-    gap: 10px;
-    padding: 14px;
-    border-radius: var(--radius-xl);
+    gap: 12px;
+    padding: 16px;
+    border-radius: var(--radius-2xl);
     cursor: pointer;
     transition: all var(--transition-spring);
     overflow: hidden;
     border: 1px solid var(--border-color);
     background: var(--gradient-card);
-    backdrop-filter: blur(30px) saturate(180%);
+    backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturation));
+    -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturation));
     box-shadow: var(--shadow-sm);
 }
 
@@ -322,7 +324,7 @@
 }
 
 .actionCard:hover {
-    transform: translateY(-4px) scale(1.03);
+    transform: translateY(-3px) scale(1.02);
     box-shadow: var(--shadow-card), var(--shadow-glow);
     border-color: var(--border-glow);
 }
@@ -498,12 +500,13 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 6px;
-    padding: 14px 10px;
-    border-radius: var(--radius-xl);
+    gap: 8px;
+    padding: 16px 12px;
+    border-radius: var(--radius-2xl);
     background: var(--gradient-card);
     border: 1px solid var(--border-color);
-    backdrop-filter: blur(20px) saturate(180%);
+    backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturation));
+    -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturation));
     cursor: pointer;
     transition: all var(--transition-spring);
     font-family: var(--font-main);
@@ -607,10 +610,11 @@
 .banner {
     position: relative;
     text-align: center;
-    padding: var(--space-8) var(--space-5);
-    border-radius: var(--radius-2xl);
+    padding: var(--space-10) var(--space-6);
+    border-radius: var(--radius-3xl);
     background: var(--gradient-card);
-    backdrop-filter: blur(40px) saturate(180%);
+    backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturation));
+    -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturation));
     border: 1px solid var(--border-color);
     overflow: hidden;
     margin-bottom: var(--space-5);

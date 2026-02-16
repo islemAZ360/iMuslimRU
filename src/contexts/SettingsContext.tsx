@@ -2,22 +2,21 @@
 
 import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
 
+
 interface SettingsContextType {
     geminiApiKey: string;
     setGeminiApiKey: (key: string) => void;
     hasGeminiKey: boolean;
     geminiModel: string;
     setGeminiModel: (model: string) => void;
+    isFastingMode: boolean;
+    setIsFastingMode: (isFasting: boolean) => void;
 }
 
 const DEFAULT_MODEL = 'gemini-3-flash-preview';
 
 const AVAILABLE_MODELS = [
     'gemini-3-flash-preview',
-    'gemini-2.5-flash-preview-05-20',
-    'gemini-2.0-flash',
-    'gemini-1.5-flash',
-    'gemini-1.5-pro',
 ];
 
 const SettingsContext = createContext<SettingsContextType | null>(null);
@@ -25,12 +24,16 @@ const SettingsContext = createContext<SettingsContextType | null>(null);
 export function SettingsProvider({ children }: { children: ReactNode }) {
     const [geminiApiKey, setKeyState] = useState('');
     const [geminiModel, setModelState] = useState(DEFAULT_MODEL);
+    const [isFastingMode, setFastingState] = useState(false);
 
     useEffect(() => {
         const savedKey = localStorage.getItem('imuslim-gemini-key');
         const savedModel = localStorage.getItem('imuslim-gemini-model');
+        const savedFasting = localStorage.getItem('imuslim-fasting-mode');
+        
         if (savedKey) setKeyState(savedKey);
         if (savedModel) setModelState(savedModel);
+        if (savedFasting) setFastingState(savedFasting === 'true');
     }, []);
 
     const setGeminiApiKey = useCallback((key: string) => {
@@ -43,6 +46,11 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
         localStorage.setItem('imuslim-gemini-model', model);
     }, []);
 
+    const setIsFastingMode = useCallback((isFasting: boolean) => {
+        setFastingState(isFasting);
+        localStorage.setItem('imuslim-fasting-mode', isFasting.toString());
+    }, []);
+
     return (
         <SettingsContext.Provider
             value={{
@@ -51,6 +59,8 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
                 hasGeminiKey: !!geminiApiKey,
                 geminiModel,
                 setGeminiModel,
+                isFastingMode,
+                setIsFastingMode,
             }}
         >
             {children}
@@ -65,3 +75,4 @@ export function useSettings() {
     if (!context) throw new Error('useSettings must be used within a SettingsProvider');
     return context;
 }
+

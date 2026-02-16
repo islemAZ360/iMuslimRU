@@ -93,23 +93,31 @@ export default function SettingsPage() {
                     </button>
                 </div>
 
-                {/* Gemini Model Selector */}
+                {/* Gemini Model Info */}
                 <div className={`glass-card ${styles.section}`}>
                     <h3 className={styles.sectionTitle}>🧠 AI Model</h3>
-                    <p className={styles.sectionInfo}>
-                        Choose the Gemini model for AI analysis. Different models have different capabilities and speeds.
-                    </p>
-                    <div className={styles.modelGrid}>
-                        {AVAILABLE_MODELS.map((model) => (
-                            <button
-                                key={model}
-                                className={`${styles.modelBtn} ${geminiModel === model ? styles.modelBtnActive : ''}`}
-                                onClick={() => setGeminiModel(model)}
-                            >
-                                <span className={styles.modelName}>{model}</span>
-                                {geminiModel === model && <span className={styles.modelCheck}>✓</span>}
-                            </button>
-                        ))}
+                    <div className={styles.settingRow} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <div>
+                            <p className={styles.sectionInfo} style={{ margin: 0 }}>
+                                {t('settings.modelInfo') || 'Using the latest optimized Gemini model.'}
+                            </p>
+                        </div>
+                        <div style={{
+                            padding: '8px 12px',
+                            background: 'rgba(52, 211, 153, 0.1)',
+                            border: '1px solid rgba(52, 211, 153, 0.2)',
+                            borderRadius: '8px',
+                            color: '#34d399',
+                            fontSize: '13px',
+                            fontWeight: 600,
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '6px',
+                            whiteSpace: 'nowrap'
+                        }}>
+                            <span>✓</span>
+                            gemini-3-flash-preview
+                        </div>
                     </div>
                 </div>
 

@@ -1,5 +1,5 @@
 /* ========================================
-   Prayer Page — Premium Styles v3
+   Prayer Page — Premium v4.0
    ======================================== */
 
 .title {
@@ -19,13 +19,13 @@
 /* ---- Tabs ---- */
 .tabs {
     display: flex;
-    gap: 4px;
+    gap: 3px;
     margin-bottom: var(--space-5);
     background: var(--bg-card);
-    border-radius: var(--radius-xl);
+    border-radius: var(--radius-2xl);
     padding: 4px;
     border: 1px solid var(--border-color);
-    backdrop-filter: blur(20px);
+    backdrop-filter: blur(24px);
     box-shadow: var(--shadow-sm);
 }
 
@@ -34,7 +34,7 @@
     padding: 10px;
     background: none;
     border: none;
-    border-radius: var(--radius-lg);
+    border-radius: var(--radius-xl);
     font-family: var(--font-main);
     font-size: var(--font-size-sm);
     font-weight: 700;
@@ -45,13 +45,13 @@
 
 .tab:hover {
     color: var(--text-secondary);
+    background: rgba(16, 185, 129, 0.04);
 }
 
 .tabActive {
     background: var(--gradient-accent);
     color: #fff;
-    box-shadow: 0 2px 12px rgba(16, 185, 129, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.15);
-    animation: scaleIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    box-shadow: 0 2px 14px rgba(16, 185, 129, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.15);
 }
 
 /* ---- Location ---- */
@@ -68,16 +68,17 @@
 .locationIcon {
     font-size: 3.5rem;
     animation: float 3s ease-in-out infinite;
-    filter: drop-shadow(0 0 16px rgba(16, 185, 129, 0.3));
+    filter: drop-shadow(0 0 20px rgba(16, 185, 129, 0.3));
 }
 
 /* ---- Next Prayer Card ---- */
 .nextPrayerCard {
     text-align: center;
-    padding: var(--space-6);
-    border-radius: var(--radius-2xl);
+    padding: var(--space-8) var(--space-6);
+    border-radius: var(--radius-3xl);
     background: var(--gradient-card);
-    backdrop-filter: blur(40px) saturate(180%);
+    backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturation));
+    -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturation));
     border: 1px solid var(--border-color);
     margin-bottom: var(--space-5);
     position: relative;
@@ -93,7 +94,7 @@
     left: 0;
     right: 0;
     height: 1px;
-    background: linear-gradient(90deg, transparent, rgba(16, 185, 129, 0.25), transparent);
+    background: linear-gradient(90deg, transparent, rgba(16, 185, 129, 0.3), rgba(251, 191, 36, 0.1), transparent);
 }
 
 .nextPrayerCard::after {
@@ -103,9 +104,9 @@
     left: -30%;
     width: 160%;
     height: 160%;
-    background: radial-gradient(ellipse, rgba(16, 185, 129, 0.06) 0%, transparent 60%);
+    background: radial-gradient(ellipse, rgba(16, 185, 129, 0.07) 0%, transparent 55%);
     pointer-events: none;
-    animation: breathe 6s ease-in-out infinite;
+    animation: breathe 8s ease-in-out infinite;
 }
 
 .nextLabel {
@@ -126,7 +127,7 @@
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
-    margin: 4px 0;
+    margin: 6px 0;
     position: relative;
     z-index: 1;
     animation: gradient-shift 4s ease infinite;
@@ -172,20 +173,21 @@
 .prayerList {
     display: flex;
     flex-direction: column;
-    gap: 6px;
+    gap: 8px;
 }
 
 .prayerItem {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 12px 16px;
-    border-radius: var(--radius-xl);
+    padding: 14px 18px;
+    border-radius: var(--radius-2xl);
     background: var(--bg-card);
     backdrop-filter: blur(16px);
-    border: 1px solid var(--border-color);
+    border: 1.5px solid var(--border-color);
     transition: all var(--transition-spring);
     box-shadow: var(--shadow-sm);
+    animation: slideUp 0.4s ease both;
 }
 
 .prayerItem:nth-child(1) {
@@ -214,35 +216,57 @@
 
 .prayerItem:hover {
     border-color: var(--border-glow);
-    transform: translateX(6px) scale(1.02);
+    transform: translateY(-2px);
     box-shadow: var(--shadow-card), var(--shadow-glow);
 }
 
-[dir='rtl'] .prayerItem:hover {
-    transform: translateX(-6px) scale(1.02);
+.prayerItemActive {
+    border-color: rgba(16, 185, 129, 0.4) !important;
+    background: rgba(16, 185, 129, 0.08);
+    box-shadow: 0 0 20px rgba(16, 185, 129, 0.12), inset 0 0 0 1px rgba(16, 185, 129, 0.05);
 }
 
-.prayerItemActive {
-    border-color: rgba(16, 185, 129, 0.35);
-    background: rgba(16, 185, 129, 0.08);
-    box-shadow: 0 0 16px rgba(16, 185, 129, 0.1);
-    animation: pulse-glow 4s ease-in-out infinite, slideInRight 0.4s ease forwards;
+/* Prayer-specific color accents */
+.prayerItem[data-prayer="fajr"] .prayerEmoji {
+    filter: drop-shadow(0 0 8px var(--prayer-fajr-glow));
+}
+
+.prayerItem[data-prayer="dhuhr"] .prayerEmoji {
+    filter: drop-shadow(0 0 8px var(--prayer-dhuhr-glow));
+}
+
+.prayerItem[data-prayer="asr"] .prayerEmoji {
+    filter: drop-shadow(0 0 8px var(--prayer-asr-glow));
+}
+
+.prayerItem[data-prayer="maghrib"] .prayerEmoji {
+    filter: drop-shadow(0 0 8px var(--prayer-maghrib-glow));
+}
+
+.prayerItem[data-prayer="isha"] .prayerEmoji {
+    filter: drop-shadow(0 0 8px var(--prayer-isha-glow));
 }
 
 .prayerLeft {
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 12px;
 }
 
 .prayerEmoji {
-    font-size: 1.1rem;
+    font-size: 1.2rem;
+    transition: transform var(--transition-spring);
+}
+
+.prayerItem:hover .prayerEmoji {
+    transform: scale(1.2);
 }
 
 .prayerName {
     font-weight: 800;
     color: var(--text-primary);
     font-size: var(--font-size-sm);
+    letter-spacing: -0.01em;
 }
 
 .prayerTime {
@@ -265,16 +289,16 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: var(--space-6);
+    padding: var(--space-8);
 }
 
 .compass {
     position: relative;
-    width: 240px;
-    height: 240px;
+    width: 250px;
+    height: 250px;
     transition: transform 0.3s ease;
-    filter: drop-shadow(0 0 24px rgba(16, 185, 129, 0.2));
-    animation: gentleBob 5s ease-in-out infinite;
+    filter: drop-shadow(0 0 30px rgba(16, 185, 129, 0.2));
+    animation: gentleBob 6s ease-in-out infinite;
 }
 
 .compassSvg {
@@ -296,7 +320,7 @@
     font-size: 1.8rem;
     text-align: center;
     transform: translateX(-50%);
-    filter: drop-shadow(0 0 10px rgba(16, 185, 129, 0.5));
+    filter: drop-shadow(0 0 12px rgba(16, 185, 129, 0.5));
     animation: glowPulse 3s ease-in-out infinite;
 }
 
