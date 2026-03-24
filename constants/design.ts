@@ -22,21 +22,21 @@
 // ============================================================================
 
 export const colors = {
-  // Brand Colors
-  primary: '#2563EB',
-  primaryDark: '#1E40AF',
-  primaryLight: '#3B82F6',
-  primaryTint: '#DBEAFE',
+  // Brand Colors (Islamic Theme: Emerald & Gold)
+  primary: '#065F46',      // Emerald 800
+  primaryDark: '#064E3B',  // Emerald 900
+  primaryLight: '#10B981', // Emerald 500
+  primaryTint: '#D1FAE5',  // Emerald 100
 
-  secondary: '#64748B',
-  secondaryDark: '#475569',
-  secondaryLight: '#94A3B8',
-  secondaryTint: '#F1F5F9',
+  secondary: '#111827',    // Gray 900
+  secondaryDark: '#030712', // Gray 950
+  secondaryLight: '#374151', // Gray 700
+  secondaryTint: '#F3F4F6', // Gray 100
 
-  accent: '#8B5CF6',
-  accentDark: '#7C3AED',
-  accentLight: '#A78BFA',
-  accentTint: '#EDE9FE',
+  accent: '#D97706',       // Amber 600 (Gold-ish)
+  accentDark: '#B45309',   // Amber 700
+  accentLight: '#FBBF24',  // Amber 400
+  accentTint: '#FEF3C7',   // Amber 100
 
   // Background Colors
   background: '#FFFFFF',
