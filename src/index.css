@@ -1,0 +1,234 @@
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&family=Lora:ital,wght@0,400..700;1,400..700&family=IBM+Plex+Mono:ital,wght@0,100..700;1,100..700&family=Amiri:wght@0,400;0,700;1,400;700&display=swap');
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   Blink UI Theme CSS
+   REQUIRED for @blinkdotnew/ui components to render correctly.
+   ───────────────────────────────────────────────────────────────────────────── */
+@import '@blinkdotnew/ui/styles';
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    font-family: var(--font-sans), 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+    letter-spacing: var(--tracking-normal);
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Muslim Russia - Custom Islamic Design System
+   Color Palette: Emerald Green + Gold accents (Islamic traditional)
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+:root {
+  /* Primary: Deep Islamic Green */
+  --primary: 158 64% 34%;
+  --primary-glow: 158 64% 44%;
+  --primary-foreground: 0 0% 100%;
+  
+  /* Secondary: Warm Gold */
+  --secondary: 43 85% 56%;
+  --secondary-foreground: 0 0% 100%;
+  
+  /* Accent: Light Emerald */
+  --accent: 158 64% 44%;
+  --accent-foreground: 0 0% 100%;
+
+  /* Background - Light Mode */
+  --background: 190 30% 97%;
+  --foreground: 200 15% 20%;
+  
+  /* Cards */
+  --card: 0 0% 100%;
+  --card-foreground: 200 15% 20%;
+  
+  /* Muted */
+  --muted: 190 20% 90%;
+  --muted-foreground: 200 10% 45%;
+  
+  /* Border */
+  --border: 190 15% 80%;
+  --input: 190 15% 80%;
+  --ring: 158 64% 34%;
+  
+  /* Destructive */
+  --destructive: 0 70% 50%;
+  --destructive-foreground: 0 0% 100%;
+  
+  /* Popover */
+  --popover: 0 0% 100%;
+  --popover-foreground: 200 15% 20%;
+
+  /* Charts */
+  --chart-1: 158 64% 34%;
+  --chart-2: 43 85% 56%;
+  --chart-3: 25 80% 55%;
+  --chart-4: 280 30% 50%;
+  --chart-5: 190 40% 40%;
+
+  /* Sidebar - Light */
+  --sidebar: 180 30% 96%;
+  --sidebar-foreground: 200 15% 20%;
+  --sidebar-primary: 158 64% 34%;
+  --sidebar-primary-foreground: 0 0% 100%;
+  --sidebar-accent: 43 85% 56%;
+  --sidebar-accent-foreground: 0 0% 100%;
+  --sidebar-border: 190 15% 80%;
+  --sidebar-ring: 158 64% 34%;
+
+  /* Typography */
+  --font-sans: 'DM Sans', sans-serif;
+  --font-serif: 'Amiri', 'Lora', serif;
+  --font-mono: 'IBM Plex Mono', monospace;
+
+  /* Shadows - Islamic style with golden glow */
+  --shadow-2xs: 0px 2px 4px -1px hsl(158 64% 34% / 0.1);
+  --shadow-xs: 0px 2px 6px -1px hsl(158 64% 34% / 0.1);
+  --shadow-sm: 0px 2px 8px -2px hsl(158 64% 34% / 0.15), 0px 1px 2px -2px hsl(43 85% 56% / 0.1);
+  --shadow: 0px 4px 10px -2px hsl(158 64% 34% / 0.15), 0px 2px 4px -2px hsl(43 85% 56% / 0.1);
+  --shadow-md: 0px 6px 14px -3px hsl(158 64% 34% / 0.2), 0px 3px 6px -3px hsl(43 85% 56% / 0.15);
+  --shadow-lg: 0px 8px 20px -4px hsl(158 64% 34% / 0.25), 0px 4px 8px -4px hsl(43 85% 56% / 0.2);
+  --shadow-xl: 0px 12px 28px -5px hsl(158 64% 34% / 0.3), 0px 6px 12px -5px hsl(43 85% 56% / 0.25);
+  --shadow-2xl: 0px 16px 36px -6px hsl(158 64% 34% / 0.35);
+  
+  /* Golden glow for premium elements */
+  --shadow-gold: 0 0 20px hsl(43 85% 56% / 0.3);
+  --shadow-islamic: 0 0 30px hsl(158 64% 34% / 0.25);
+
+  /* Misc */
+  --tracking-normal: 0em;
+  --spacing: 0.25rem;
+  --radius: 0.75rem;
+}
+
+/* Dark Mode - Premium Islamic Night */
+:root.dark,
+.theme-linear.dark,
+.theme-glass.dark,
+.theme-midnight.dark,
+.theme-minimal.dark {
+  --primary: 158 64% 55%;
+  --primary-glow: 158 64% 65%;
+  --primary-foreground: 200 15% 10%;
+  
+  --secondary: 43 85% 65%;
+  --secondary-foreground: 200 15% 10%;
+  
+  --accent: 158 64% 65%;
+  --accent-foreground: 200 15% 10%;
+
+  /* Background - Deep night */
+  --background: 220 30% 8%;
+  --foreground: 190 20% 90%;
+  
+  --card: 220 25% 12%;
+  --card-foreground: 190 20% 90%;
+  
+  --muted: 220 20% 15%;
+  --muted-foreground: 190 15% 60%;
+  
+  --border: 220 15% 20%;
+  --input: 220 15% 20%;
+  --ring: 158 64% 55%;
+  
+  --destructive: 0 70% 55%;
+  --destructive-foreground: 0 0% 100%;
+  
+  --popover: 220 25% 12%;
+  --popover-foreground: 190 20% 90%;
+
+  --chart-1: 158 64% 55%;
+  --chart-2: 43 85% 65%;
+  --chart-3: 25 80% 60%;
+  --chart-4: 280 30% 60%;
+  --chart-5: 190 40% 50%;
+
+  --sidebar: 220 25% 10%;
+  --sidebar-foreground: 190 20% 90%;
+  --sidebar-primary: 158 64% 55%;
+  --sidebar-primary-foreground: 200 15% 10%;
+  --sidebar-accent: 43 85% 65%;
+  --sidebar-accent-foreground: 200 15% 10%;
+  --sidebar-border: 220 15% 20%;
+  --sidebar-ring: 158 64% 55%;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Animations
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes pulse-gentle {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
+}
+
+@keyframes rotate-slow {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.4s ease-out forwards;
+}
+
+.animate-slide-up {
+  animation: slideUp 0.5s ease-out forwards;
+}
+
+.animate-pulse-gentle {
+  animation: pulse-gentle 2s ease-in-out infinite;
+}
+
+/* Stagger animations for lists */
+.stagger-1 { animation-delay: 0.1s; }
+.stagger-2 { animation-delay: 0.2s; }
+.stagger-3 { animation-delay: 0.3s; }
+.stagger-4 { animation-delay: 0.4s; }
+.stagger-5 { animation-delay: 0.5s; }
+.stagger-6 { animation-delay: 0.6s; }
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
