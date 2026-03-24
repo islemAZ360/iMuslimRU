@@ -1,10 +1,9 @@
 import React, { useState, useRef } from 'react';
 import {
   View, Text, StyleSheet, Dimensions, FlatList, Pressable, Platform,
-  ActivityIndicator, Share,
+  ActivityIndicator, Share, StatusBar,
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { Container } from '@/components/ui';
 import { colors, spacing, typography, shadows, borderRadius } from '@/constants/design';
 import { useLanguageStore } from '@/hooks/useLanguage';
 import { useQuery, useMutation } from '@tanstack/react-query';
@@ -18,6 +17,8 @@ import Animated, {
 import { DateTime } from 'luxon';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useProfile } from '@/hooks/useProfile';
+import { getAdhkarByCategory, LocalAdhkar } from '@/constants/adhkar-data';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const { width } = Dimensions.get('window');
 
@@ -26,12 +27,12 @@ export default function AdhkarDetail() {
   const { language } = useLanguageStore();
   const { user } = useProfile();
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const flatListRef = useRef<FlatList>(null);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [counts, setCounts] = useState<Record<string, number>>({});
   const [completedIds, setCompletedIds] = useState<Set<string>>(new Set());
   const scale = useSharedValue(1);
-  const glow = useSharedValue(0);
 
   const currentHour = DateTime.now().hour;
   const isMorningTime = currentHour >= 4 && currentHour < 12;
@@ -40,28 +41,34 @@ export default function AdhkarDetail() {
 
   const { logAdhkar } = useWorship();
 
-  const { data: adhkar = [], isLoading } = useQuery({
+  const { data: adhkar = [], isLoading } = useQuery<LocalAdhkar[]>({
     queryKey: ['adhkar', id],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('adhkar')
-        .select('*')
-        .eq('category_id', id as string)
-        .order('sort_order', { ascending: true });
+      try {
+        const { data, error } = await supabase
+          .from('adhkar')
+          .select('*')
+          .eq('category_id', id as string)
+          .order('sort_order', { ascending: true });
 
-      if (error) throw error;
+        if (error || !data || data.length === 0) {
+          return getAdhkarByCategory(id as string);
+        }
 
-      return (data || []).map((item: any) => ({
-        id: item.id,
-        categoryId: item.category_id,
-        textAr: item.text_ar,
-        textRu: item.text_ru,
-        textEn: item.text_en,
-        transliteration: item.transliteration,
-        source: item.source,
-        targetCount: item.target_count,
-        sortOrder: item.sort_order,
-      }));
+        return data.map((item: any) => ({
+          id: item.id,
+          categoryId: item.category_id,
+          textAr: item.text_ar,
+          textRu: item.text_ru,
+          textEn: item.text_en,
+          transliteration: item.transliteration,
+          source: item.source,
+          targetCount: item.target_count,
+          sortOrder: item.sort_order,
+        }));
+      } catch {
+        return getAdhkarByCategory(id as string);
+      }
     },
   });
 
@@ -86,7 +93,6 @@ export default function AdhkarDetail() {
         await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
       }
 
-      // Button scale animation
       scale.value = withSequence(
         withSpring(0.88, { damping: 8, stiffness: 200 }),
         withSpring(1, { damping: 12, stiffness: 150 })
@@ -117,11 +123,11 @@ export default function AdhkarDetail() {
     });
   };
 
-  const handleShare = async (item: any) => {
+  const handleShare = async (item: LocalAdhkar) => {
     const text = `${item.textAr}\n\n${language === 'ru' ? item.textRu : item.textEn}`;
     try {
       await Share.share({ message: text });
-    } catch {}
+    } catch { /* silent */ }
   };
 
   const animatedButtonStyle = useAnimatedStyle(() => ({
@@ -131,7 +137,7 @@ export default function AdhkarDetail() {
   const totalCompleted = adhkar.filter(d => completedIds.has(d.id)).length;
   const totalProgress = adhkar.length > 0 ? totalCompleted / adhkar.length : 0;
 
-  const renderItem = ({ item, index }: { item: any; index: number }) => {
+  const renderItem = ({ item, index }: { item: LocalAdhkar; index: number }) => {
     const currentCount = counts[item.id] || 0;
     const target = Number(item.targetCount);
     const progress = Math.min(currentCount / target, 1);
@@ -140,21 +146,33 @@ export default function AdhkarDetail() {
 
     return (
       <View style={styles.page}>
-        {/* Number indicator */}
+        {/* Page indicator pill */}
         <View style={styles.pageIndicator}>
           <Text style={styles.pageIndicatorText}>{index + 1} / {adhkar.length}</Text>
         </View>
 
+        {/* Dhikr Card */}
         <View style={[styles.card, isCompleted && styles.cardCompleted]}>
-          {/* Arabic Text */}
+          {/* Decorative top border */}
+          <LinearGradient
+            colors={isCompleted ? ['#059669', '#047857'] : ['#065F46', '#022C22']}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 0 }}
+            style={styles.cardTopBar}
+          />
+
+          {/* Arabic text */}
           <Text style={[styles.arabic, isCompleted && styles.arabicCompleted]}>
             {item.textAr}
           </Text>
 
+          {/* Divider */}
+          <View style={styles.cardDivider} />
+
           {/* Transliteration */}
-          {item.transliteration && (
+          {item.transliteration ? (
             <Text style={styles.transliteration}>{item.transliteration}</Text>
-          )}
+          ) : null}
 
           {/* Translation */}
           <Text style={styles.translation}>
@@ -162,56 +180,63 @@ export default function AdhkarDetail() {
           </Text>
 
           {/* Source */}
-          {item.source && (
+          {item.source ? (
             <View style={styles.sourceRow}>
-              <Ionicons name="book-outline" size={14} color={colors.textTertiary} />
+              <Ionicons name="book-outline" size={12} color="rgba(201,168,76,0.5)" />
               <Text style={styles.sourceText}>{item.source}</Text>
             </View>
-          )}
+          ) : null}
 
           {/* Actions */}
           <View style={styles.cardActions}>
             <Pressable onPress={() => handleReset(item.id)} style={styles.actionBtn}>
-              <Ionicons name="refresh-outline" size={18} color={colors.textSecondary} />
+              <Ionicons name="refresh-outline" size={16} color="#B8A98A" />
             </Pressable>
             <Pressable onPress={() => handleShare(item)} style={styles.actionBtn}>
-              <Ionicons name="share-outline" size={18} color={colors.textSecondary} />
+              <Ionicons name="share-outline" size={16} color="#B8A98A" />
             </Pressable>
           </View>
         </View>
 
         {/* Counter Area */}
         <View style={styles.counterContainer}>
-          {/* Progress Bar */}
+          {/* Progress bar */}
           <View style={styles.progressBackground}>
             <Animated.View
               style={[
                 styles.progressBar,
                 {
                   width: `${progress * 100}%` as any,
-                  backgroundColor: isCompleted ? colors.success : colors.primary,
+                  backgroundColor: isCompleted ? '#059669' : '#C9A84C',
                 },
               ]}
             />
           </View>
 
-          <Text style={[styles.targetCount, isCompleted && { color: colors.success }]}>
+          <Text style={[styles.targetCount, isCompleted && styles.targetCountDone]}>
             {currentCount} / {target}
           </Text>
 
           <Animated.View style={animatedButtonStyle}>
             <Pressable
-              style={[
-                styles.counterButton,
-                isCompleted && styles.counterButtonFinished,
-              ]}
+              style={[styles.counterButton, isCompleted && styles.counterButtonDone]}
               onPress={isCurrent ? handlePress : undefined}
               disabled={isCompleted}
             >
               {isCompleted ? (
-                <Ionicons name="checkmark" size={52} color={colors.white} />
+                <LinearGradient
+                  colors={['#059669', '#047857']}
+                  style={styles.counterButtonGradient}
+                >
+                  <Ionicons name="checkmark" size={52} color="#E8D48B" />
+                </LinearGradient>
               ) : (
-                <Text style={styles.counterButtonText}>{currentCount}</Text>
+                <LinearGradient
+                  colors={['#065F46', '#022C22']}
+                  style={styles.counterButtonGradient}
+                >
+                  <Text style={styles.counterButtonText}>{currentCount}</Text>
+                </LinearGradient>
               )}
             </Pressable>
           </Animated.View>
@@ -227,23 +252,30 @@ export default function AdhkarDetail() {
   };
 
   return (
-    <Container style={styles.container}>
+    <View style={styles.container}>
+      <StatusBar barStyle="light-content" backgroundColor="#022C22" />
+
       {/* Header */}
-      <LinearGradient colors={[colors.primary, '#1565C0']} style={styles.header}>
+      <LinearGradient
+        colors={['#022C22', '#064E3B']}
+        style={[styles.header, { paddingTop: insets.top + 8 }]}
+      >
         <Pressable onPress={() => router.back()} style={styles.backButton}>
-          <Ionicons name="arrow-back" size={24} color={colors.white} />
+          <Ionicons name="arrow-back" size={22} color="#E8D48B" />
         </Pressable>
+
         <View style={styles.headerCenter}>
           <Text style={styles.headerTitle} numberOfLines={1}>{name}</Text>
           {isOutOfTime && (
             <Text style={styles.headerSubtitle}>
               {id === 'morning'
-                ? (language === 'ru' ? 'Утренние (до полудня)' : language === 'ar' ? 'صباحي (قبل الظهر)' : 'Morning (before noon)')
-                : (language === 'ru' ? 'Вечерние (после 16:00)' : language === 'ar' ? 'مسائي (بعد الساعة 4)' : 'Evening (after 4 PM)')}
+                ? (language === 'ru' ? 'Утренние (до полудня)' : 'Morning (before noon)')
+                : (language === 'ru' ? 'Вечерние (после 16:00)' : 'Evening (after 4 PM)')}
             </Text>
           )}
         </View>
-        {/* Overall progress */}
+
+        {/* Progress pill */}
         <View style={styles.headerProgress}>
           <Text style={styles.headerProgressText}>{totalCompleted}/{adhkar.length}</Text>
         </View>
@@ -251,17 +283,22 @@ export default function AdhkarDetail() {
 
       {/* Overall progress bar */}
       <View style={styles.overallProgressBg}>
-        <View style={[styles.overallProgressFill, { width: `${totalProgress * 100}%` as any }]} />
+        <Animated.View
+          style={[
+            styles.overallProgressFill,
+            { width: `${totalProgress * 100}%` as any },
+          ]}
+        />
       </View>
 
       {isLoading ? (
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={colors.primary} />
+        <View style={styles.centerContainer}>
+          <ActivityIndicator size="large" color="#C9A84C" />
         </View>
       ) : adhkar.length === 0 ? (
-        <View style={styles.loadingContainer}>
-          <Ionicons name="book-outline" size={48} color={colors.border} />
-          <Text style={[typography.body, { color: colors.textSecondary, marginTop: spacing.md }]}>
+        <View style={styles.centerContainer}>
+          <Ionicons name="book-outline" size={48} color="rgba(201,168,76,0.3)" />
+          <Text style={styles.emptyText}>
             {language === 'ru' ? 'Нет азкаров' : language === 'ar' ? 'لا توجد أذكار' : 'No adhkar found'}
           </Text>
         </View>
@@ -281,22 +318,32 @@ export default function AdhkarDetail() {
           getItemLayout={(_, index) => ({ length: width, offset: width * index, index })}
         />
       )}
-    </Container>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    padding: 0,
-    backgroundColor: colors.backgroundSecondary,
+    flex: 1,
+    backgroundColor: '#0A0A0A',
   },
+
+  // ── Header ───────────────────────────────────────────────────────────────
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
     paddingHorizontal: spacing.md,
-    paddingVertical: spacing.md,
-    paddingTop: Platform.OS === 'ios' ? spacing.lg : spacing.md,
+    paddingBottom: spacing.md,
+  },
+  backButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(201,168,76,0.15)',
+    borderWidth: 1,
+    borderColor: 'rgba(201,168,76,0.25)',
   },
   headerCenter: {
     flex: 1,
@@ -305,101 +352,125 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     ...typography.h3,
-    color: colors.white,
+    color: '#E8D48B',
     fontWeight: '700',
     textAlign: 'center',
   },
   headerSubtitle: {
     ...typography.tiny,
-    color: 'rgba(255,255,255,0.75)',
+    color: 'rgba(232,212,139,0.6)',
     marginTop: 2,
     textAlign: 'center',
   },
   headerProgress: {
-    backgroundColor: 'rgba(255,255,255,0.2)',
-    paddingHorizontal: spacing.sm,
+    backgroundColor: 'rgba(201,168,76,0.2)',
+    paddingHorizontal: 12,
     paddingVertical: 4,
     borderRadius: borderRadius.full,
-    minWidth: 40,
+    minWidth: 44,
     alignItems: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(201,168,76,0.35)',
   },
   headerProgressText: {
     ...typography.captionBold,
-    color: colors.white,
+    color: '#C9A84C',
   },
+
+  // ── Overall progress bar ──────────────────────────────────────────────────
   overallProgressBg: {
-    height: 3,
-    backgroundColor: colors.borderLight,
+    height: 2,
+    backgroundColor: 'rgba(201,168,76,0.1)',
   },
   overallProgressFill: {
     height: '100%',
-    backgroundColor: colors.primary,
+    backgroundColor: '#C9A84C',
   },
-  loadingContainer: {
+
+  centerContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+    gap: spacing.md,
   },
-  backButton: {
-    padding: spacing.sm,
-    width: 40,
+  emptyText: {
+    ...typography.body,
+    color: colors.textSecondary,
   },
+
+  // ── Page ─────────────────────────────────────────────────────────────────
   page: {
     width,
-    padding: spacing.lg,
+    paddingHorizontal: spacing.lg,
+    paddingTop: spacing.md,
+    paddingBottom: spacing.xl,
     justifyContent: 'space-between',
   },
   pageIndicator: {
     alignSelf: 'center',
-    backgroundColor: colors.white,
+    backgroundColor: 'rgba(201,168,76,0.12)',
     paddingHorizontal: spacing.md,
     paddingVertical: 4,
     borderRadius: borderRadius.full,
-    marginBottom: spacing.sm,
-    ...shadows.sm,
+    marginBottom: spacing.md,
+    borderWidth: 1,
+    borderColor: 'rgba(201,168,76,0.25)',
   },
   pageIndicatorText: {
     ...typography.captionBold,
-    color: colors.textSecondary,
+    color: '#C9A84C',
   },
+
+  // ── Dhikr Card ────────────────────────────────────────────────────────────
   card: {
-    backgroundColor: colors.white,
-    padding: spacing.xl,
+    backgroundColor: '#111827',
     borderRadius: borderRadius.xxl,
-    ...shadows.lg,
+    padding: spacing.xl,
+    borderWidth: 1,
+    borderColor: 'rgba(201,168,76,0.15)',
+    overflow: 'hidden',
     minHeight: 280,
     justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: colors.borderLight,
   },
   cardCompleted: {
-    borderColor: colors.success,
-    borderWidth: 2,
-    backgroundColor: '#F0FDF4',
+    borderColor: 'rgba(5,150,105,0.5)',
+    backgroundColor: 'rgba(5,150,105,0.08)',
+  },
+  cardTopBar: {
+    height: 2,
+    borderRadius: 1,
+    marginBottom: spacing.lg,
   },
   arabic: {
-    fontSize: 28,
+    fontSize: 30,
     textAlign: 'center',
-    color: colors.primary,
-    marginBottom: spacing.lg,
-    lineHeight: 50,
+    color: '#C9A84C',
+    marginBottom: spacing.md,
+    lineHeight: 54,
     fontWeight: '600',
+    letterSpacing: 1,
   },
   arabicCompleted: {
-    color: colors.success,
+    color: '#059669',
+  },
+  cardDivider: {
+    height: 1,
+    backgroundColor: 'rgba(201,168,76,0.1)',
+    marginBottom: spacing.md,
   },
   transliteration: {
-    ...typography.body,
+    ...typography.caption,
     textAlign: 'center',
-    color: colors.textSecondary,
+    color: '#B8A98A',
     fontStyle: 'italic',
-    marginBottom: spacing.md,
+    marginBottom: spacing.sm,
+    lineHeight: 22,
   },
   translation: {
     ...typography.body,
     textAlign: 'center',
-    color: colors.text,
-    lineHeight: 24,
+    color: '#F5F0E8',
+    lineHeight: 26,
   },
   sourceRow: {
     flexDirection: 'row',
@@ -410,7 +481,7 @@ const styles = StyleSheet.create({
   },
   sourceText: {
     ...typography.tiny,
-    color: colors.textTertiary,
+    color: 'rgba(201,168,76,0.5)',
     fontStyle: 'italic',
   },
   cardActions: {
@@ -420,54 +491,68 @@ const styles = StyleSheet.create({
     marginTop: spacing.md,
   },
   actionBtn: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: colors.backgroundSecondary,
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    backgroundColor: 'rgba(201,168,76,0.08)',
     justifyContent: 'center',
     alignItems: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(201,168,76,0.15)',
   },
+
+  // ── Counter ───────────────────────────────────────────────────────────────
   counterContainer: {
     alignItems: 'center',
-    marginTop: spacing.lg,
-    marginBottom: spacing.md,
+    paddingTop: spacing.lg,
   },
   progressBackground: {
     width: '100%',
-    height: 6,
-    backgroundColor: colors.border,
-    borderRadius: 3,
+    height: 4,
+    backgroundColor: 'rgba(201,168,76,0.1)',
+    borderRadius: 2,
     marginBottom: spacing.md,
     overflow: 'hidden',
   },
   progressBar: {
     height: '100%',
-    borderRadius: 3,
+    borderRadius: 2,
   },
   targetCount: {
     ...typography.h2,
-    color: colors.textSecondary,
+    color: 'rgba(201,168,76,0.6)',
     marginBottom: spacing.lg,
     fontVariant: ['tabular-nums'],
+    fontWeight: '800',
+  },
+  targetCountDone: {
+    color: '#059669',
   },
   counterButton: {
     width: 140,
     height: 140,
     borderRadius: 70,
-    backgroundColor: colors.primary,
+    overflow: 'hidden',
+    borderWidth: 2,
+    borderColor: 'rgba(201,168,76,0.4)',
+    shadowColor: '#C9A84C',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 12,
+    elevation: 8,
+  },
+  counterButtonDone: {
+    borderColor: 'rgba(5,150,105,0.5)',
+    shadowColor: '#059669',
+  },
+  counterButtonGradient: {
+    flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    ...shadows.xl,
-    borderWidth: 4,
-    borderColor: colors.primaryTint,
-  },
-  counterButtonFinished: {
-    backgroundColor: colors.success,
-    borderColor: '#BBF7D0',
   },
   counterButtonText: {
     ...typography.display,
-    color: colors.white,
+    color: '#C9A84C',
     fontSize: 44,
     fontWeight: '800',
     fontVariant: ['tabular-nums'],

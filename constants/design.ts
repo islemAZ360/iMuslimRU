@@ -22,109 +22,115 @@
 // ============================================================================
 
 export const colors = {
-  // Brand Colors
-  primary: '#065F46',      // Deep Emerald Green
-  primaryDark: '#064E3B',
-  primaryLight: '#10B981',
-  primaryTint: '#D1FAE5',
+  // ── Brand / Primary (Islamic Emerald) ────────────────────────────────────
+  primary: '#065F46',
+  primaryDark: '#022C22',
+  primaryLight: '#047857',
+  primaryTint: 'rgba(6,95,70,0.12)',
 
-  secondary: '#64748B',
-  secondaryDark: '#475569',
-  secondaryLight: '#94A3B8',
-  secondaryTint: '#F1F5F9',
+  // ── Gold ─────────────────────────────────────────────────────────────────
+  gold: '#C9A84C',
+  goldDark: '#A07830',
+  goldLight: '#E8D48B',
+  goldTint: 'rgba(201,168,76,0.12)',
 
-  accent: '#F59E0B',       // Amber/Gold
-  accentDark: '#D97706',
-  accentLight: '#FBBF24',
-  accentTint: '#FEF3C7',
+  // ── Backgrounds (Pure dark Islamic palette) ───────────────────────────────
+  background: '#0A0A0A',
+  backgroundCard: '#111827',
+  backgroundElevated: '#1A2332',
+  backgroundSurface: '#0F1923',
 
-  // Background Colors
-  background: '#FFFFFF',
-  backgroundSecondary: '#F8FAFC',
-  backgroundTertiary: '#F1F5F9',
+  // Legacy aliases (keep for backward-compat with existing screens)
+  backgroundSecondary: '#111111',
+  backgroundTertiary: '#1A1A1A',
+  backgroundDark: '#0A0A0A',
+  backgroundDarkSecondary: '#111111',
+  backgroundDarkTertiary: '#1A1A1A',
 
-  // Dark Mode Backgrounds
-  backgroundDark: '#0F172A',
-  backgroundDarkSecondary: '#1E293B',
-  backgroundDarkTertiary: '#334155',
+  // ── Text ─────────────────────────────────────────────────────────────────
+  text: '#F5F0E8',
+  textSecondary: '#B8A98A',
+  textTertiary: '#6B7280',
+  textDisabled: '#4B5563',
 
-  // Text Colors
-  text: '#1E293B',
-  textSecondary: '#64748B',
-  textTertiary: '#94A3B8',
-  textDisabled: '#CBD5E1',
+  // Legacy aliases
+  textDark: '#F5F0E8',
+  textDarkSecondary: '#B8A98A',
+  textDarkTertiary: '#6B7280',
 
-  // Dark Mode Text
-  textDark: '#F1F5F9',
-  textDarkSecondary: '#CBD5E1',
-  textDarkTertiary: '#94A3B8',
+  // ── Semantic (muted) ─────────────────────────────────────────────────────
+  success: '#059669',
+  successDark: '#047857',
+  successLight: '#10B981',
+  successTint: 'rgba(5,150,105,0.12)',
 
-  // Semantic Colors
-  success: '#10B981',
-  successDark: '#059669',
-  successLight: '#34D399',
-  successTint: '#D1FAE5',
+  error: '#DC2626',
+  errorDark: '#B91C1C',
+  errorLight: '#EF4444',
+  errorTint: 'rgba(220,38,38,0.12)',
 
-  error: '#EF4444',
-  errorDark: '#DC2626',
-  errorLight: '#F87171',
-  errorTint: '#FEE2E2',
+  warning: '#D97706',
+  warningDark: '#B45309',
+  warningLight: '#F59E0B',
+  warningTint: 'rgba(217,119,6,0.12)',
 
-  warning: '#F59E0B',
-  warningDark: '#D97706',
-  warningLight: '#FBBF24',
-  warningTint: '#FEF3C7',
+  info: '#0891B2',
+  infoDark: '#0E7490',
+  infoLight: '#06B6D4',
+  infoTint: 'rgba(8,145,178,0.12)',
 
-  info: '#3B82F6',
-  infoDark: '#2563EB',
-  infoLight: '#60A5FA',
-  infoTint: '#DBEAFE',
+  // ── Borders (gold-tinted) ─────────────────────────────────────────────────
+  border: 'rgba(201,168,76,0.15)',
+  borderLight: 'rgba(201,168,76,0.08)',
+  borderGold: 'rgba(201,168,76,0.4)',
+  borderDark: 'rgba(201,168,76,0.25)',
 
-  // Border Colors
-  border: '#E2E8F0',
-  borderDark: '#CBD5E1',
-  borderLight: '#F1F5F9',
+  // Legacy
+  borderDarkMode: 'rgba(201,168,76,0.15)',
+  borderDarkModeLight: 'rgba(201,168,76,0.08)',
 
-  // Dark Mode Borders
-  borderDarkMode: '#334155',
-  borderDarkModeLight: '#475569',
+  // ── Overlays ──────────────────────────────────────────────────────────────
+  overlay: 'rgba(0, 0, 0, 0.7)',
+  overlayLight: 'rgba(0, 0, 0, 0.5)',
+  overlayDark: 'rgba(0, 0, 0, 0.85)',
 
-  // Overlay Colors
-  overlay: 'rgba(0, 0, 0, 0.5)',
-  overlayLight: 'rgba(0, 0, 0, 0.3)',
-  overlayDark: 'rgba(0, 0, 0, 0.7)',
-
-  // Special Colors
+  // ── Basics ────────────────────────────────────────────────────────────────
   white: '#FFFFFF',
   black: '#000000',
   transparent: 'transparent',
 
-  // ── Premium Islamic Palette ──────────────────────────────────────────────
-  // Gold family
+  // ── Islamic Palette (full set) ─────────────────────────────────────────────
   goldPrimary: '#C9A84C',
-  goldLight: '#E8D48B',
-  goldDark: '#A07830',
-  goldTint: '#FDF7E3',
+  goldLight2: '#E8D48B',
+  goldDark2: '#A07830',
+  goldTint2: 'rgba(201,168,76,0.1)',
 
-  // Navy family
-  navyDeep: '#0A1628',
-  navyMid: '#162033',
-
-  // Emerald family (deep Islamic green)
   emeraldDeep: '#022C22',
   emeraldRich: '#064E3B',
   emeraldMid: '#065F46',
-  emeraldLight: '#059669',
-  emeraldBright: '#10B981',
+  emeraldLight: '#047857',
+  emeraldBright: '#059669',
 
-  // Glass / translucency helpers
-  glassWhite: 'rgba(255, 255, 255, 0.12)',
-  glassBorder: 'rgba(255, 255, 255, 0.2)',
-  glassDark: 'rgba(0, 0, 0, 0.3)',
+  glassWhite: 'rgba(255,255,255,0.06)',
+  glassBorder: 'rgba(255,255,255,0.1)',
+  glassDark: 'rgba(0,0,0,0.5)',
 
-  // Islamic theme backgrounds
-  islamicBg1: '#0D2137',
-  islamicBg2: '#0A1628',
+  islamicBg1: '#0A0A0A',
+  islamicBg2: '#111111',
+
+  navyDeep: '#0A0A0A',
+  navyMid: '#111111',
+
+  // Secondary aliases (unused in design but kept for type-compat)
+  secondary: '#047857',
+  secondaryDark: '#065F46',
+  secondaryLight: '#059669',
+  secondaryTint: 'rgba(4,120,87,0.12)',
+
+  accent: '#C9A84C',
+  accentDark: '#A07830',
+  accentLight: '#E8D48B',
+  accentTint: 'rgba(201,168,76,0.12)',
 };
 
 // ============================================================================

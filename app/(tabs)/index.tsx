@@ -9,6 +9,7 @@ import {
   Pressable,
   ActivityIndicator,
   Dimensions,
+  StatusBar,
 } from 'react-native';
 import * as Location from 'expo-location';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -22,25 +23,32 @@ import { useRouter } from 'expo-router';
 import { useWorship } from '@/hooks/useWorship';
 import { useProfile } from '@/hooks/useProfile';
 import Animated, { FadeInUp, FadeIn } from 'react-native-reanimated';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
-// Per-prayer gradient colours (dark → accent)
+// All green/gold - no blues, purples, reds
 const PRAYER_COLORS: Record<string, [string, string]> = {
-  Fajr:    ['#1E3A5F', '#2563EB'],
-  Sunrise: ['#B45309', '#F59E0B'],
-  Dhuhr:   ['#065F46', '#10B981'],
-  Asr:     ['#1E40AF', '#3B82F6'],
-  Maghrib: ['#7C2D12', '#EF4444'],
-  Isha:    ['#1E1B4B', '#7C3AED'],
+  Fajr:    ['#022C22', '#065F46'],
+  Sunrise: ['#1A0F00', '#A07830'],
+  Dhuhr:   ['#022C22', '#047857'],
+  Asr:     ['#022C22', '#065F46'],
+  Maghrib: ['#1A0F00', '#C9A84C'],
+  Isha:    ['#0A0A0A', '#022C22'],
 };
 
-// Decorative dots for the Islamic geometric pattern overlay
+const PRAYER_ICONS: Record<string, string> = {
+  Fajr: 'sunny-outline', Sunrise: 'partly-sunny-outline',
+  Dhuhr: 'sunny', Asr: 'cloudy-outline',
+  Maghrib: 'moon-outline', Isha: 'moon',
+};
+
+// Geometric pattern dots
 const PATTERN_DOTS = Array.from({ length: 20 }, (_, i) => ({
   key: i,
   left: (i % 5) * 80 - 10,
   top: Math.floor(i / 5) * 60 - 10,
-  opacity: 0.06 + (i % 3) * 0.02,
+  opacity: 0.04 + (i % 3) * 0.02,
 }));
 
 export default function Home() {
@@ -48,6 +56,7 @@ export default function Home() {
   const t = translations[language].home;
   const wt = translations[language].worship;
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const { profile } = useProfile();
   const { prayerLogs, adhkarProgress, logPrayer } = useWorship();
 
@@ -58,7 +67,7 @@ export default function Home() {
   const [countdown, setCountdown] = useState('');
   const countdownRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  // ─── Location + Prayer fetch ─────────────────────────────────────────────
+  // ── Location + Prayer fetch ─────────────────────────────────────────────
   const fetchLocationAndPrayers = async () => {
     try {
       const { status } = await Location.requestForegroundPermissionsAsync();
@@ -91,7 +100,7 @@ export default function Home() {
     return () => { if (countdownRef.current) clearInterval(countdownRef.current); };
   }, [profile?.calculationMethod]);
 
-  // ─── Live countdown ───────────────────────────────────────────────────────
+  // ── Live countdown ──────────────────────────────────────────────────────
   useEffect(() => {
     if (!prayerData) return;
     if (countdownRef.current) clearInterval(countdownRef.current);
@@ -112,7 +121,6 @@ export default function Home() {
     return () => { if (countdownRef.current) clearInterval(countdownRef.current); };
   }, [prayerData]);
 
-  // Refresh prayer times every minute
   useEffect(() => {
     const interval = setInterval(() => {
       if (location) {
@@ -131,7 +139,7 @@ export default function Home() {
   const getPrayerDisplayName = (name: PrayerName) =>
     t.prayers?.[name.toLowerCase() as keyof typeof t.prayers] || name;
 
-  // ─── Derived state ────────────────────────────────────────────────────────
+  // ── Derived state ────────────────────────────────────────────────────────
   const completedPrayersCount = prayerLogs?.length || 0;
   const morningDone  = adhkarProgress?.some(p => p.dhikrId.startsWith('morning'));
   const eveningDone  = adhkarProgress?.some(p => p.dhikrId.startsWith('evening'));
@@ -143,40 +151,38 @@ export default function Home() {
 
   return (
     <View style={styles.root}>
+      <StatusBar barStyle="light-content" backgroundColor="#022C22" />
       <ScrollView
         showsVerticalScrollIndicator={false}
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
             onRefresh={onRefresh}
-            tintColor={colors.goldPrimary}
+            tintColor="#C9A84C"
           />
         }
         contentContainerStyle={styles.scrollContent}
       >
         {/* ── Premium Header ─────────────────────────────────────────────── */}
         <LinearGradient
-          colors={['#022C22', '#064E3B', '#0D2137']}
+          colors={['#022C22', '#064E3B', '#0A0A0A']}
           start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={styles.header}
+          end={{ x: 0, y: 1 }}
+          style={[styles.header, { paddingTop: insets.top + 16 }]}
         >
-          {/* Islamic geometric pattern overlay */}
+          {/* Islamic geometric pattern */}
           <View style={styles.patternOverlay} pointerEvents="none">
             {PATTERN_DOTS.map(({ key, left, top, opacity }) => (
-              <View
-                key={key}
-                style={[styles.patternDot, { left, top, opacity }]}
-              />
+              <View key={key} style={[styles.patternDot, { left, top, opacity }]} />
             ))}
           </View>
 
-          {/* Top row: greeting + action buttons */}
+          {/* Top row */}
           <View style={styles.headerTopRow}>
             <View>
               <Text style={styles.greeting}>{greeting}</Text>
               <View style={styles.locationRow}>
-                <Ionicons name="location" size={12} color="rgba(201,168,76,0.85)" />
+                <Ionicons name="location" size={11} color="rgba(201,168,76,0.7)" />
                 <Text style={styles.locationText}>
                   {cityName || 'Moscow'} · {dateStr}
                 </Text>
@@ -184,10 +190,10 @@ export default function Home() {
             </View>
             <View style={styles.headerActions}>
               <Pressable onPress={() => router.push('/qibla')} style={styles.iconBtn}>
-                <Ionicons name="compass" size={22} color={colors.goldPrimary} />
+                <Ionicons name="compass" size={20} color="#C9A84C" />
               </Pressable>
               <Pressable onPress={() => router.push('/stats')} style={styles.iconBtn}>
-                <Ionicons name="stats-chart" size={22} color={colors.goldPrimary} />
+                <Ionicons name="stats-chart" size={20} color="#C9A84C" />
               </Pressable>
             </View>
           </View>
@@ -195,9 +201,8 @@ export default function Home() {
           {/* ── Next Prayer Glass Card ──────────────────────────────────── */}
           {prayerData ? (
             <Animated.View entering={FadeIn.delay(100)} style={styles.nextPrayerCard}>
-              <View style={styles.nextPrayerGlass}>
-                {/* Left: name + time */}
-                <View style={styles.nextPrayerLeft}>
+              <View style={styles.nextPrayerRow}>
+                <View>
                   <Text style={styles.nextPrayerLabel}>{t.nextPrayer}</Text>
                   <Text style={styles.nextPrayerName}>
                     {getPrayerDisplayName(prayerData.nextPrayer.name as PrayerName)}
@@ -205,12 +210,12 @@ export default function Home() {
                   <Text style={styles.nextPrayerTime}>{prayerData.nextPrayer.time}</Text>
                 </View>
 
-                {/* Right: countdown ring */}
-                <View style={styles.nextPrayerRight}>
-                  <View style={styles.countdownRing}>
-                    <Text style={styles.countdownText}>{countdown}</Text>
-                    <Text style={styles.countdownLabel}>remaining</Text>
-                  </View>
+                {/* Countdown ring */}
+                <View style={styles.countdownRing}>
+                  <Text style={styles.countdownText}>{countdown}</Text>
+                  <Text style={styles.countdownLabel}>
+                    {language === 'ru' ? 'осталось' : language === 'ar' ? 'متبقي' : 'remaining'}
+                  </Text>
                 </View>
               </View>
 
@@ -225,7 +230,7 @@ export default function Home() {
                       style={[
                         styles.dot,
                         isCompleted && styles.dotDone,
-                        isNext     && styles.dotNext,
+                        isNext && styles.dotNext,
                       ]}
                     />
                   );
@@ -233,18 +238,18 @@ export default function Home() {
               </View>
             </Animated.View>
           ) : (
-            <View style={[styles.nextPrayerCard, styles.nextPrayerCardLoading]}>
-              <ActivityIndicator color={colors.goldPrimary} size="large" />
+            <View style={[styles.nextPrayerCard, styles.loadingCard]}>
+              <ActivityIndicator color="#C9A84C" size="large" />
             </View>
           )}
         </LinearGradient>
 
-        {/* ── Prayer Times List ───────────────────────────────────────────── */}
+        {/* ── Prayer Times List ─────────────────────────────────────────── */}
         <Animated.View entering={FadeInUp.delay(150)} style={styles.prayerSection}>
           <View style={styles.sectionHeaderRow}>
             <Text style={styles.sectionTitle}>{t.prayerTimes}</Text>
-            <View style={styles.prayerCompletedBadge}>
-              <Text style={styles.prayerCompletedText}>{completedPrayersCount}/5</Text>
+            <View style={styles.completedBadge}>
+              <Text style={styles.completedBadgeText}>{completedPrayersCount}/5</Text>
             </View>
           </View>
 
@@ -252,8 +257,9 @@ export default function Home() {
             <View style={styles.prayerList}>
               {Object.entries(prayerData.times).map(([name, time], idx) => {
                 const isCompleted = prayerLogs?.some(l => l.prayer_name === name);
-                const isNext      = prayerData.nextPrayer.name === name;
-                const gc          = PRAYER_COLORS[name] || ['#065F46', '#10B981'];
+                const isNext = prayerData.nextPrayer.name === name;
+                const gc = PRAYER_COLORS[name] ?? ['#022C22', '#065F46'];
+                const iconName = PRAYER_ICONS[name] ?? 'time-outline';
 
                 return (
                   <Animated.View key={name} entering={FadeInUp.delay(200 + idx * 50)}>
@@ -261,24 +267,24 @@ export default function Home() {
                       onPress={() => logPrayer.mutate(name as PrayerName)}
                       style={[styles.prayerRow, isNext && styles.prayerRowNext]}
                     >
-                      {/* subtle gradient wash */}
+                      {/* Gradient wash */}
                       <LinearGradient
-                        colors={[gc[0] + '22', gc[1] + '08']}
+                        colors={[gc[0] + '44', gc[1] + '11']}
                         start={{ x: 0, y: 0 }}
                         end={{ x: 1, y: 0 }}
                         style={StyleSheet.absoluteFillObject}
                       />
-                      {/* coloured left accent bar */}
+                      {/* Left accent */}
                       <View style={[styles.prayerColorBar, { backgroundColor: gc[1] }]} />
 
                       <View style={styles.prayerRowContent}>
                         <View style={styles.prayerInfo}>
-                          {/* completion circle */}
+                          {/* Check circle */}
                           <View style={[
                             styles.prayerCheck,
                             isCompleted && { backgroundColor: gc[1], borderColor: gc[1] },
                           ]}>
-                            {isCompleted && <Ionicons name="checkmark" size={12} color="#fff" />}
+                            {isCompleted && <Ionicons name="checkmark" size={11} color="#fff" />}
                           </View>
 
                           <Text style={[styles.prayerName, isCompleted && styles.prayerNameDone]}>
@@ -302,117 +308,97 @@ export default function Home() {
               })}
             </View>
           ) : (
-            <ActivityIndicator color={colors.primary} style={{ padding: spacing.xl }} />
+            <ActivityIndicator color="#C9A84C" style={{ padding: spacing.xl }} />
           )}
         </Animated.View>
 
-        {/* ── Worship & Adhkar Summary ────────────────────────────────────── */}
-        <Animated.View entering={FadeInUp.delay(400)} style={styles.worshipSection}>
+        {/* ── Worship Summary ────────────────────────────────────────────── */}
+        <Animated.View entering={FadeInUp.delay(350)} style={styles.worshipSection}>
           <View style={styles.sectionHeaderRow}>
             <Text style={styles.sectionTitle}>{wt.title}</Text>
-            <Pressable onPress={() => router.push('/stats')} style={styles.statsLinkBtn}>
-              <Ionicons name="stats-chart-outline" size={18} color={colors.primary} />
+            <Pressable onPress={() => router.push('/stats')} style={styles.statsBtn}>
+              <Ionicons name="stats-chart-outline" size={18} color="#C9A84C" />
             </Pressable>
           </View>
 
           <View style={styles.worshipGrid}>
-            {/* Prayers completed card */}
+            {/* Prayers card */}
             <View style={styles.worshipCard}>
-              <LinearGradient
-                colors={['#022C22', '#065F46']}
-                style={styles.worshipCardHeader}
-              >
-                <Ionicons name="checkmark-done" size={18} color={colors.goldPrimary} />
+              <LinearGradient colors={['#022C22', '#065F46']} style={styles.worshipIcon}>
+                <Ionicons name="checkmark-done" size={18} color="#C9A84C" />
               </LinearGradient>
               <Text style={styles.worshipValue}>{completedPrayersCount}/5</Text>
               <Text style={styles.worshipLabel}>{wt.prayersCompleted}</Text>
-              <View style={styles.miniProgressBar}>
-                <View
-                  style={[
-                    styles.miniProgressFill,
-                    { width: `${(completedPrayersCount / 5) * 100}%` as any },
-                  ]}
-                />
+              <View style={styles.miniBar}>
+                <View style={[styles.miniBarFill, { width: `${(completedPrayersCount / 5) * 100}%` as any }]} />
               </View>
             </View>
 
             {/* Morning adhkar */}
-            <Pressable
-              style={styles.worshipCard}
-              onPress={() => router.push('/(tabs)/adhkar')}
-            >
-              <LinearGradient
-                colors={['#92400E', '#D97706']}
-                style={styles.worshipCardHeader}
-              >
-                <Ionicons name="sunny" size={18} color="#FDE68A" />
+            <Pressable style={styles.worshipCard} onPress={() => router.push('/(tabs)/adhkar')}>
+              <LinearGradient colors={['#A07830', '#C9A84C']} style={styles.worshipIcon}>
+                <Ionicons name="sunny" size={18} color="#022C22" />
               </LinearGradient>
               <Ionicons
                 name={morningDone ? 'checkmark-circle' : 'ellipse-outline'}
                 size={24}
-                color={morningDone ? colors.success : colors.textTertiary}
+                color={morningDone ? '#059669' : 'rgba(201,168,76,0.3)'}
               />
               <Text style={styles.worshipLabel}>{wt.morningAdhkar}</Text>
             </Pressable>
 
             {/* Evening adhkar */}
-            <Pressable
-              style={styles.worshipCard}
-              onPress={() => router.push('/(tabs)/adhkar')}
-            >
-              <LinearGradient
-                colors={['#1E1B4B', '#7C3AED']}
-                style={styles.worshipCardHeader}
-              >
-                <Ionicons name="moon" size={18} color="#C4B5FD" />
+            <Pressable style={styles.worshipCard} onPress={() => router.push('/(tabs)/adhkar')}>
+              <LinearGradient colors={['#064E3B', '#022C22']} style={styles.worshipIcon}>
+                <Ionicons name="moon" size={18} color="#E8D48B" />
               </LinearGradient>
               <Ionicons
                 name={eveningDone ? 'checkmark-circle' : 'ellipse-outline'}
                 size={24}
-                color={eveningDone ? colors.success : colors.textTertiary}
+                color={eveningDone ? '#059669' : 'rgba(201,168,76,0.3)'}
               />
               <Text style={styles.worshipLabel}>{wt.eveningAdhkar}</Text>
             </Pressable>
           </View>
         </Animated.View>
 
-        {/* ── Quick Actions ───────────────────────────────────────────────── */}
-        <Animated.View entering={FadeInUp.delay(500)} style={styles.quickActions}>
+        {/* ── Quick Actions ──────────────────────────────────────────────── */}
+        <Animated.View entering={FadeInUp.delay(450)} style={styles.quickActions}>
           <Text style={styles.sectionTitle}>
             {language === 'ru' ? 'Быстрый доступ' : language === 'ar' ? 'وصول سريع' : 'Quick Access'}
           </Text>
           <View style={styles.actionGrid}>
             <Pressable style={styles.actionCard} onPress={() => router.push('/qibla')}>
-              <LinearGradient colors={['#1E3A5F', '#2563EB']} style={styles.actionGradient}>
-                <Ionicons name="compass" size={28} color={colors.white} />
+              <LinearGradient colors={['#064E3B', '#022C22']} style={styles.actionGradient}>
+                <Ionicons name="compass" size={28} color="#E8D48B" />
                 <Text style={styles.actionText}>{t.qibla}</Text>
               </LinearGradient>
             </Pressable>
 
             <Pressable style={styles.actionCard} onPress={() => router.push('/(tabs)/ramadan')}>
-              <LinearGradient colors={['#1E1B4B', '#7C3AED']} style={styles.actionGradient}>
-                <Ionicons name="moon" size={28} color={colors.white} />
-                <Text style={styles.actionText}>{t.calendar}</Text>
+              <LinearGradient colors={['#A07830', '#C9A84C']} style={styles.actionGradient}>
+                <Ionicons name="moon" size={28} color="#022C22" />
+                <Text style={[styles.actionText, { color: '#022C22' }]}>{t.calendar}</Text>
               </LinearGradient>
             </Pressable>
 
             <Pressable style={styles.actionCard} onPress={() => router.push('/(tabs)/adhkar')}>
-              <LinearGradient colors={['#065F46', '#10B981']} style={styles.actionGradient}>
-                <Ionicons name="book" size={28} color={colors.white} />
+              <LinearGradient colors={['#065F46', '#047857']} style={styles.actionGradient}>
+                <Ionicons name="book" size={28} color="#E8D48B" />
                 <Text style={styles.actionText}>{translations[language].adhkar.title}</Text>
               </LinearGradient>
             </Pressable>
 
             <Pressable style={styles.actionCard} onPress={() => router.push('/(tabs)/scanner')}>
-              <LinearGradient colors={['#7C2D12', '#EF4444']} style={styles.actionGradient}>
-                <Ionicons name="scan-circle" size={28} color={colors.white} />
+              <LinearGradient colors={['#064E3B', '#022C22']} style={styles.actionGradient}>
+                <Ionicons name="scan-circle" size={28} color="#C9A84C" />
                 <Text style={styles.actionText}>{translations[language].scanner.title}</Text>
               </LinearGradient>
             </Pressable>
           </View>
         </Animated.View>
 
-        <View style={{ height: 100 }} />
+        <View style={{ height: 110 }} />
       </ScrollView>
     </View>
   );
@@ -422,13 +408,12 @@ export default function Home() {
 const styles = StyleSheet.create({
   root: {
     flex: 1,
-    backgroundColor: '#F0FDF4',
+    backgroundColor: '#0A0A0A',
   },
   scrollContent: {},
 
   // ── Header ──────────────────────────────────────────────────────────────
   header: {
-    paddingTop: Platform.OS === 'ios' ? 54 : 40,
     paddingBottom: spacing.xl,
     paddingHorizontal: spacing.lg,
     overflow: 'hidden',
@@ -444,7 +429,7 @@ const styles = StyleSheet.create({
     height: 60,
     borderRadius: 30,
     borderWidth: 1,
-    borderColor: 'rgba(201,168,76,0.4)',
+    borderColor: 'rgba(201,168,76,0.5)',
   },
   headerTopRow: {
     flexDirection: 'row',
@@ -455,7 +440,7 @@ const styles = StyleSheet.create({
   greeting: {
     fontSize: 22,
     fontWeight: '700',
-    color: colors.white,
+    color: '#F5F0E8',
     letterSpacing: -0.3,
   },
   locationRow: {
@@ -466,7 +451,7 @@ const styles = StyleSheet.create({
   },
   locationText: {
     fontSize: 12,
-    color: 'rgba(201,168,76,0.85)',
+    color: 'rgba(201,168,76,0.7)',
     fontWeight: '500',
   },
   headerActions: {
@@ -474,38 +459,37 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
   },
   iconBtn: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: 'rgba(201,168,76,0.15)',
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    backgroundColor: 'rgba(201,168,76,0.1)',
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: 'rgba(201,168,76,0.3)',
+    borderColor: 'rgba(201,168,76,0.25)',
   },
 
-  // ── Next Prayer Glass Card ───────────────────────────────────────────────
+  // ── Next Prayer Card ─────────────────────────────────────────────────────
   nextPrayerCard: {
-    backgroundColor: 'rgba(255,255,255,0.08)',
+    backgroundColor: 'rgba(255,255,255,0.05)',
     borderRadius: 24,
     padding: spacing.lg,
     borderWidth: 1,
-    borderColor: 'rgba(201,168,76,0.25)',
+    borderColor: 'rgba(201,168,76,0.2)',
   },
-  nextPrayerCardLoading: {
+  loadingCard: {
     minHeight: 120,
     justifyContent: 'center',
     alignItems: 'center',
   },
-  nextPrayerGlass: {
+  nextPrayerRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
   },
-  nextPrayerLeft: {},
   nextPrayerLabel: {
     fontSize: 11,
-    color: 'rgba(201,168,76,0.85)',
+    color: 'rgba(201,168,76,0.7)',
     textTransform: 'uppercase',
     letterSpacing: 1.5,
     fontWeight: '700',
@@ -514,38 +498,35 @@ const styles = StyleSheet.create({
   nextPrayerName: {
     fontSize: 34,
     fontWeight: '800',
-    color: colors.white,
+    color: '#F5F0E8',
     letterSpacing: -0.5,
   },
   nextPrayerTime: {
     fontSize: 20,
-    color: 'rgba(255,255,255,0.7)',
+    color: 'rgba(245,240,232,0.65)',
     fontWeight: '500',
     marginTop: 4,
   },
-  nextPrayerRight: {
-    alignItems: 'center',
-  },
   countdownRing: {
-    width: 90,
-    height: 90,
-    borderRadius: 45,
+    width: 88,
+    height: 88,
+    borderRadius: 44,
     borderWidth: 2,
-    borderColor: 'rgba(201,168,76,0.5)',
+    borderColor: 'rgba(201,168,76,0.4)',
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: 'rgba(201,168,76,0.1)',
+    backgroundColor: 'rgba(201,168,76,0.08)',
   },
   countdownText: {
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: '800',
-    color: colors.goldPrimary,
+    color: '#C9A84C',
     fontVariant: ['tabular-nums'],
     letterSpacing: 0.5,
   },
   countdownLabel: {
     fontSize: 8,
-    color: 'rgba(201,168,76,0.7)',
+    color: 'rgba(201,168,76,0.6)',
     textTransform: 'uppercase',
     letterSpacing: 0.5,
     marginTop: 2,
@@ -560,13 +541,13 @@ const styles = StyleSheet.create({
     width: 8,
     height: 8,
     borderRadius: 4,
-    backgroundColor: 'rgba(255,255,255,0.2)',
+    backgroundColor: 'rgba(255,255,255,0.12)',
   },
   dotDone: {
-    backgroundColor: colors.goldPrimary,
+    backgroundColor: '#C9A84C',
   },
   dotNext: {
-    backgroundColor: colors.white,
+    backgroundColor: '#F5F0E8',
     width: 20,
     borderRadius: 4,
   },
@@ -585,33 +566,36 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     ...typography.h3,
-    color: colors.text,
+    color: '#F5F0E8',
     fontWeight: '700',
   },
-  prayerCompletedBadge: {
-    backgroundColor: colors.primaryTint,
+  completedBadge: {
+    backgroundColor: 'rgba(201,168,76,0.15)',
     paddingHorizontal: spacing.sm,
     paddingVertical: 4,
     borderRadius: borderRadius.full,
+    borderWidth: 1,
+    borderColor: 'rgba(201,168,76,0.3)',
   },
-  prayerCompletedText: {
+  completedBadgeText: {
     ...typography.captionBold,
-    color: colors.primary,
+    color: '#C9A84C',
   },
   prayerList: {
     borderRadius: 20,
     overflow: 'hidden',
-    ...shadows.md,
+    borderWidth: 1,
+    borderColor: 'rgba(201,168,76,0.1)',
   },
   prayerRow: {
     position: 'relative',
     overflow: 'hidden',
     borderBottomWidth: 1,
-    borderBottomColor: 'rgba(0,0,0,0.04)',
-    backgroundColor: colors.white,
+    borderBottomColor: 'rgba(201,168,76,0.06)',
+    backgroundColor: '#111827',
   },
   prayerRowNext: {
-    backgroundColor: '#F0FDF4',
+    backgroundColor: 'rgba(6,95,70,0.2)',
   },
   prayerColorBar: {
     position: 'absolute',
@@ -634,40 +618,40 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
   },
   prayerCheck: {
-    width: 22,
-    height: 22,
-    borderRadius: 11,
+    width: 20,
+    height: 20,
+    borderRadius: 10,
     borderWidth: 2,
-    borderColor: 'rgba(0,0,0,0.15)',
+    borderColor: 'rgba(201,168,76,0.25)',
     justifyContent: 'center',
     alignItems: 'center',
   },
   prayerName: {
     ...typography.bodyBold,
-    color: colors.text,
+    color: '#F5F0E8',
   },
   prayerNameDone: {
-    color: colors.textSecondary,
+    color: '#6B7280',
     textDecorationLine: 'line-through',
   },
   nextBadge: {
-    backgroundColor: colors.goldPrimary,
+    backgroundColor: '#C9A84C',
     paddingHorizontal: 6,
     paddingVertical: 2,
     borderRadius: 4,
   },
   nextBadgeText: {
-    fontSize: 9,
+    fontSize: 8,
     fontWeight: '800',
-    color: '#fff',
+    color: '#022C22',
     letterSpacing: 0.5,
   },
   prayerTime: {
     ...typography.h4,
-    color: colors.textSecondary,
+    color: '#B8A98A',
   },
   prayerTimeNext: {
-    color: colors.primary,
+    color: '#C9A84C',
     fontWeight: '700',
   },
 
@@ -676,7 +660,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.lg,
     paddingBottom: spacing.md,
   },
-  statsLinkBtn: {
+  statsBtn: {
     padding: 4,
   },
   worshipGrid: {
@@ -686,17 +670,16 @@ const styles = StyleSheet.create({
   },
   worshipCard: {
     flex: 1,
-    backgroundColor: colors.white,
+    backgroundColor: '#111827',
     borderRadius: 16,
     padding: spacing.md,
     alignItems: 'center',
     gap: spacing.xs,
-    ...shadows.sm,
     borderWidth: 1,
-    borderColor: colors.borderLight,
+    borderColor: 'rgba(201,168,76,0.12)',
     overflow: 'hidden',
   },
-  worshipCardHeader: {
+  worshipIcon: {
     width: 40,
     height: 40,
     borderRadius: 20,
@@ -706,26 +689,26 @@ const styles = StyleSheet.create({
   },
   worshipValue: {
     ...typography.h3,
-    color: colors.primary,
+    color: '#C9A84C',
     fontWeight: '800',
   },
   worshipLabel: {
     fontSize: 11,
-    color: colors.textSecondary,
+    color: '#B8A98A',
     textAlign: 'center',
     fontWeight: '500',
   },
-  miniProgressBar: {
-    height: 4,
+  miniBar: {
+    height: 3,
     width: '100%',
-    backgroundColor: colors.borderLight,
+    backgroundColor: 'rgba(201,168,76,0.1)',
     borderRadius: 2,
     overflow: 'hidden',
     marginTop: 4,
   },
-  miniProgressFill: {
+  miniBarFill: {
     height: '100%',
-    backgroundColor: colors.primary,
+    backgroundColor: '#C9A84C',
     borderRadius: 2,
   },
 
@@ -744,7 +727,13 @@ const styles = StyleSheet.create({
     width: (SCREEN_WIDTH - spacing.lg * 2 - spacing.sm) / 2,
     borderRadius: 20,
     overflow: 'hidden',
-    ...shadows.md,
+    borderWidth: 1,
+    borderColor: 'rgba(201,168,76,0.15)',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 6,
   },
   actionGradient: {
     padding: spacing.lg,
@@ -755,7 +744,7 @@ const styles = StyleSheet.create({
   },
   actionText: {
     ...typography.captionBold,
-    color: colors.white,
+    color: '#E8D48B',
     textAlign: 'center',
   },
 });

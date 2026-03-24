@@ -1,6 +1,7 @@
 import React from 'react';
-import { View, Text, StyleSheet, FlatList, Pressable } from 'react-native';
-import { Container } from '@/components/ui';
+import {
+  View, Text, StyleSheet, FlatList, Pressable, StatusBar,
+} from 'react-native';
 import { colors, spacing, typography, shadows, borderRadius } from '@/constants/design';
 import { useLanguageStore } from '@/hooks/useLanguage';
 import { translations } from '@/constants/translations';
@@ -9,100 +10,167 @@ import { supabase } from '@/lib/supabase';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { DateTime } from 'luxon';
-import Animated, { FadeInUp } from 'react-native-reanimated';
+import Animated, { FadeInUp, FadeIn } from 'react-native-reanimated';
 import { LinearGradient } from 'expo-linear-gradient';
+import { getEnrichedCategories, getAdhkarByCategory, LocalAdhkarCategory } from '@/constants/adhkar-data';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-const CATEGORY_COLORS: Record<string, [string, string]> = {
-  morning: ['#F59E0B', '#D97706'],
-  evening: ['#7C3AED', '#5B21B6'],
-  after_prayer: ['#065F46', '#064E3B'],
-  sleep: ['#1E40AF', '#1E3A8A'],
-  wakeup: ['#0891B2', '#0E7490'],
-  tasbih: ['#059669', '#047857'],
-  ramadan: ['#DC2626', '#B91C1C'],
+const CATEGORY_GRADIENTS: Record<string, [string, string]> = {
+  morning:          ['#065F46', '#022C22'],
+  evening:          ['#064E3B', '#022C22'],
+  after_prayer:     ['#047857', '#065F46'],
+  sleep:            ['#022C22', '#0A0A0A'],
+  wakeup:           ['#065F46', '#047857'],
+  tasbih:           ['#047857', '#022C22'],
+  quran_duas:       ['#064E3B', '#065F46'],
+  protection:       ['#022C22', '#064E3B'],
+  travel:           ['#065F46', '#022C22'],
+  food:             ['#A07830', '#C9A84C'],
+  entering_home:    ['#047857', '#065F46'],
+  entering_mosque:  ['#064E3B', '#022C22'],
+  stress:           ['#022C22', '#047857'],
+  gratitude:        ['#A07830', '#065F46'],
+  istighfar:        ['#064E3B', '#047857'],
 };
 
-const CATEGORY_ICONS: Record<string, string> = {
-  morning: 'sunny-outline',
-  evening: 'moon-outline',
-  after_prayer: 'checkmark-circle-outline',
-  sleep: 'bed-outline',
-  wakeup: 'alarm-outline',
-  tasbih: 'infinite-outline',
-  ramadan: 'star-outline',
-};
+interface EnrichedCategory extends LocalAdhkarCategory {
+  count: number;
+}
 
 export default function Adhkar() {
   const { language } = useLanguageStore();
   const t = translations[language].adhkar;
   const router = useRouter();
+  const insets = useSafeAreaInsets();
 
   const currentHour = DateTime.now().hour;
   const isMorningTime = currentHour >= 4 && currentHour < 12;
   const isEveningTime = currentHour >= 16 && currentHour < 24;
 
-  const { data: categories, isLoading } = useQuery({
+  // Fetch from Supabase; fall back to local data if empty
+  const { data: categories = [] } = useQuery<EnrichedCategory[]>({
     queryKey: ['adhkar_categories'],
     queryFn: async () => {
-      const { data: cats, error } = await supabase
-        .from('adhkar_categories')
-        .select('*')
-        .order('sort_order', { ascending: true });
+      try {
+        const { data: cats, error } = await supabase
+          .from('adhkar_categories')
+          .select('*')
+          .order('sort_order', { ascending: true });
 
-      if (error) throw error;
+        if (error || !cats || cats.length === 0) {
+          // ── Fallback: local data ──
+          return getEnrichedCategories() as EnrichedCategory[];
+        }
 
-      // Get counts for each category
-      const counts = await Promise.all(
-        (cats || []).map(async (cat) => {
-          const { count } = await supabase
-            .from('adhkar')
-            .select('*', { count: 'exact', head: true })
-            .eq('category_id', cat.id);
-          return { id: cat.id, count: count || 0 };
-        })
-      );
+        const counts = await Promise.all(
+          cats.map(async (cat) => {
+            const { count } = await supabase
+              .from('adhkar')
+              .select('*', { count: 'exact', head: true })
+              .eq('category_id', cat.id);
+            return { id: cat.id, count: count || 0 };
+          })
+        );
 
-      return (cats || []).map(cat => ({
-        id: cat.id,
-        nameRu: cat.name_ru,
-        nameAr: cat.name_ar,
-        nameEn: cat.name_en,
-        sortOrder: cat.sort_order,
-        count: counts.find(c => c.id === cat.id)?.count || 0,
-      }));
+        const remoteData: EnrichedCategory[] = cats.map(cat => ({
+          id: cat.id,
+          nameRu: cat.name_ru,
+          nameAr: cat.name_ar,
+          nameEn: cat.name_en,
+          icon: cat.icon || 'star-outline',
+          sortOrder: cat.sort_order,
+          count: counts.find(c => c.id === cat.id)?.count || 0,
+        }));
+
+        // If server returns categories but adhkar counts are 0, augment with local counts
+        return remoteData.map(cat => {
+          if (cat.count === 0) {
+            const localCount = getAdhkarByCategory(cat.id).length;
+            return { ...cat, count: localCount };
+          }
+          return cat;
+        });
+      } catch {
+        return getEnrichedCategories() as EnrichedCategory[];
+      }
     },
   });
 
-  const getCategoryName = (item: any) => {
+  const getCategoryName = (item: EnrichedCategory) => {
     if (language === 'ru') return item.nameRu;
     if (language === 'ar') return item.nameAr;
     return item.nameEn;
   };
 
+  const totalAdhkar = categories.reduce((sum, c) => sum + (c.count || 0), 0);
+
   const renderHeader = () => (
-    <View style={styles.headerSection}>
-      <Text style={styles.title}>{t.title}</Text>
-      <Text style={styles.subtitle}>
-        {language === 'ru'
-          ? 'Выберите категорию азкаров'
-          : language === 'ar'
-          ? 'اختر فئة الأذكار'
-          : 'Choose a category'}
+    <Animated.View entering={FadeIn.delay(50)}>
+      {/* Ornamental header section */}
+      <LinearGradient
+        colors={['#022C22', '#064E3B', '#0A0A0A']}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 0, y: 1 }}
+        style={[styles.headerGradient, { paddingTop: insets.top + 16 }]}
+      >
+        {/* Decorative stars */}
+        <View style={styles.ornamentRow} pointerEvents="none">
+          {['✦', '✧', '✦', '✧', '✦'].map((s, i) => (
+            <Text key={i} style={[styles.ornamentStar, { opacity: 0.15 + i * 0.05 }]}>{s}</Text>
+          ))}
+        </View>
+
+        {/* Arabic Title */}
+        <Text style={styles.arabicTitle}>موسوعة الأذكار</Text>
+        <Text style={styles.screenTitle}>
+          {language === 'ru' ? 'Энциклопедия Азкаров' : language === 'ar' ? 'موسوعة الأذكار' : 'Adhkar Encyclopedia'}
+        </Text>
+
+        {/* Stats bar */}
+        <View style={styles.statsBar}>
+          <View style={styles.statItem}>
+            <Text style={styles.statNumber}>{categories.length}</Text>
+            <Text style={styles.statLabel}>
+              {language === 'ru' ? 'разделов' : language === 'ar' ? 'فئة' : 'sections'}
+            </Text>
+          </View>
+          <View style={styles.statDivider} />
+          <View style={styles.statItem}>
+            <Text style={styles.statNumber}>{totalAdhkar}</Text>
+            <Text style={styles.statLabel}>
+              {language === 'ru' ? 'азкаров' : language === 'ar' ? 'ذكر' : 'adhkar'}
+            </Text>
+          </View>
+        </View>
+
+        {/* Decorative separator */}
+        <View style={styles.ornamentLine}>
+          <View style={styles.lineSegment} />
+          <Text style={styles.lineGem}>◆</Text>
+          <View style={styles.lineSegment} />
+        </View>
+      </LinearGradient>
+
+      <Text style={styles.sectionLabel}>
+        {language === 'ru' ? 'Выберите категорию' : language === 'ar' ? 'اختر فئة' : 'Choose a category'}
       </Text>
-    </View>
+    </Animated.View>
   );
 
-  const renderItem = ({ item, index }: { item: any; index: number }) => {
+  const renderItem = ({ item, index }: { item: EnrichedCategory; index: number }) => {
     const isRecommended =
       (item.id === 'morning' && isMorningTime) ||
       (item.id === 'evening' && isEveningTime);
-    const gradient = CATEGORY_COLORS[item.id] || [colors.primary, colors.primaryDark];
-    const icon = CATEGORY_ICONS[item.id] || 'star-outline';
+    const gradient = CATEGORY_GRADIENTS[item.id] ?? ['#065F46', '#022C22'];
 
     return (
-      <Animated.View entering={FadeInUp.delay(index * 70)}>
+      <Animated.View entering={FadeInUp.delay(index * 50)}>
         <Pressable
-          style={[styles.card, isRecommended && styles.recommendedCard]}
+          style={({ pressed }) => [
+            styles.card,
+            isRecommended && styles.recommendedCard,
+            pressed && styles.cardPressed,
+          ]}
           onPress={() =>
             router.push({
               pathname: '/adhkar/[id]',
@@ -110,147 +178,234 @@ export default function Adhkar() {
             })
           }
         >
-          <LinearGradient colors={gradient} style={styles.iconContainer}>
-            <Ionicons name={icon as any} size={26} color={colors.white} />
+          {/* Gold left accent for recommended */}
+          {isRecommended && <View style={styles.recommendedAccent} />}
+
+          {/* Icon gradient circle */}
+          <LinearGradient colors={gradient} style={styles.iconCircle}>
+            <Ionicons name={item.icon as any} size={24} color="#E8D48B" />
           </LinearGradient>
 
-          <View style={styles.content}>
+          {/* Content */}
+          <View style={styles.cardContent}>
             <View style={styles.titleRow}>
-              <Text style={styles.cardTitle}>{getCategoryName(item)}</Text>
+              <Text style={styles.cardTitle} numberOfLines={1}>
+                {getCategoryName(item)}
+              </Text>
               {isRecommended && (
-                <View style={styles.badge}>
-                  <Text style={styles.badgeText}>
+                <View style={styles.nowBadge}>
+                  <Text style={styles.nowBadgeText}>
                     {language === 'ru' ? 'Сейчас' : language === 'ar' ? 'الآن' : 'Now'}
                   </Text>
                 </View>
               )}
             </View>
-            <Text style={styles.cardSubtitle}>
+            <Text style={styles.arabicSubtitle}>{item.nameAr}</Text>
+            <Text style={styles.countText}>
               {item.count}{' '}
-              {t.countSuffix}
+              {language === 'ru'
+                ? item.count === 1 ? 'дуа' : item.count < 5 ? 'дуа' : 'дуа'
+                : language === 'ar' ? 'ذكر' : 'dhikr'}
             </Text>
           </View>
 
-          <Ionicons name="chevron-forward" size={20} color={colors.textTertiary} />
+          {/* Arrow */}
+          <Ionicons name="chevron-forward" size={18} color="rgba(201,168,76,0.5)" />
         </Pressable>
       </Animated.View>
     );
   };
 
-  const renderEmpty = () => {
-    if (isLoading) return null;
-    return (
-      <View style={styles.emptyState}>
-        <Ionicons name="book-outline" size={56} color={colors.border} />
-        <Text style={styles.emptyText}>
-          {language === 'ru' ? 'Нет категорий' : language === 'ar' ? 'لا توجد فئات' : 'No categories'}
-        </Text>
-      </View>
-    );
-  };
-
   return (
-    <Container style={styles.container}>
+    <View style={styles.root}>
+      <StatusBar barStyle="light-content" backgroundColor="#022C22" />
       <FlatList
         data={categories}
         renderItem={renderItem}
         keyExtractor={(item) => item.id}
         ListHeaderComponent={renderHeader}
-        ListEmptyComponent={renderEmpty}
-        contentContainerStyle={styles.list}
+        contentContainerStyle={styles.listContent}
         showsVerticalScrollIndicator={false}
       />
-    </Container>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    backgroundColor: colors.backgroundSecondary,
-    padding: 0,
+  root: {
+    flex: 1,
+    backgroundColor: '#0A0A0A',
   },
-  headerSection: {
+
+  // ── Header ───────────────────────────────────────────────────────────────
+  headerGradient: {
     paddingHorizontal: spacing.lg,
-    paddingTop: spacing.lg,
-    paddingBottom: spacing.md,
+    paddingBottom: spacing.xl,
+    alignItems: 'center',
   },
-  title: {
-    ...typography.h1,
-    color: colors.primary,
+  ornamentRow: {
+    flexDirection: 'row',
+    gap: spacing.md,
+    marginBottom: spacing.sm,
+  },
+  ornamentStar: {
+    color: '#C9A84C',
+    fontSize: 16,
+  },
+  arabicTitle: {
+    fontSize: 36,
+    color: '#C9A84C',
+    fontWeight: '700',
+    textAlign: 'center',
+    letterSpacing: 2,
+    marginBottom: 4,
+  },
+  screenTitle: {
+    ...typography.body,
+    color: 'rgba(232,212,139,0.7)',
+    textAlign: 'center',
+    letterSpacing: 0.5,
+    marginBottom: spacing.lg,
+  },
+  statsBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(201,168,76,0.1)',
+    borderRadius: borderRadius.full,
+    borderWidth: 1,
+    borderColor: 'rgba(201,168,76,0.25)',
+    paddingHorizontal: spacing.xl,
+    paddingVertical: spacing.sm,
+    gap: spacing.xl,
+    marginBottom: spacing.lg,
+  },
+  statItem: {
+    alignItems: 'center',
+  },
+  statNumber: {
+    fontSize: 22,
     fontWeight: '800',
+    color: '#C9A84C',
+    letterSpacing: -0.3,
   },
-  subtitle: {
-    ...typography.caption,
-    color: colors.textSecondary,
-    marginTop: 4,
+  statLabel: {
+    ...typography.tiny,
+    color: 'rgba(201,168,76,0.6)',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
   },
-  list: {
-    paddingHorizontal: spacing.lg,
-    paddingBottom: spacing.xxxxl,
+  statDivider: {
+    width: 1,
+    height: 28,
+    backgroundColor: 'rgba(201,168,76,0.2)',
+  },
+  ornamentLine: {
+    flexDirection: 'row',
+    alignItems: 'center',
     gap: spacing.sm,
   },
+  lineSegment: {
+    flex: 1,
+    height: 1,
+    backgroundColor: 'rgba(201,168,76,0.2)',
+  },
+  lineGem: {
+    color: 'rgba(201,168,76,0.4)',
+    fontSize: 12,
+  },
+
+  // ── List ─────────────────────────────────────────────────────────────────
+  sectionLabel: {
+    ...typography.captionBold,
+    color: colors.textTertiary,
+    textTransform: 'uppercase',
+    letterSpacing: 1,
+    paddingHorizontal: spacing.lg,
+    paddingTop: spacing.lg,
+    paddingBottom: spacing.sm,
+  },
+  listContent: {
+    paddingHorizontal: spacing.md,
+    paddingBottom: 120,
+    gap: spacing.sm,
+  },
+
+  // ── Cards ─────────────────────────────────────────────────────────────────
   card: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.white,
+    backgroundColor: '#111827',
     padding: spacing.md,
     borderRadius: 20,
-    ...shadows.sm,
     borderWidth: 1,
-    borderColor: colors.borderLight,
+    borderColor: 'rgba(201,168,76,0.12)',
+    overflow: 'hidden',
+    gap: spacing.md,
+  },
+  cardPressed: {
+    opacity: 0.8,
+    transform: [{ scale: 0.98 }],
   },
   recommendedCard: {
-    borderColor: colors.primaryLight,
-    borderWidth: 2,
-    ...shadows.md,
+    borderColor: 'rgba(201,168,76,0.4)',
+    borderWidth: 1.5,
+    backgroundColor: 'rgba(6,95,70,0.15)',
   },
-  iconContainer: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
+  recommendedAccent: {
+    position: 'absolute',
+    left: 0,
+    top: 0,
+    bottom: 0,
+    width: 3,
+    backgroundColor: '#C9A84C',
+    borderTopLeftRadius: 20,
+    borderBottomLeftRadius: 20,
+  },
+  iconCircle: {
+    width: 52,
+    height: 52,
+    borderRadius: 26,
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: spacing.md,
-    ...shadows.sm,
+    borderWidth: 1,
+    borderColor: 'rgba(232,212,139,0.2)',
   },
-  content: {
+  cardContent: {
     flex: 1,
   },
   titleRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.xs,
-    marginBottom: spacing.xs,
+    marginBottom: 2,
   },
   cardTitle: {
-    ...typography.h3,
-    color: colors.text,
+    ...typography.bodyBold,
+    color: '#F5F0E8',
     fontWeight: '700',
+    flex: 1,
   },
-  cardSubtitle: {
-    ...typography.caption,
-    color: colors.textSecondary,
+  arabicSubtitle: {
+    fontSize: 13,
+    color: '#B8A98A',
+    marginBottom: 2,
   },
-  badge: {
-    backgroundColor: colors.primary,
-    paddingHorizontal: spacing.sm,
+  countText: {
+    ...typography.small,
+    color: 'rgba(201,168,76,0.7)',
+    fontWeight: '500',
+  },
+  nowBadge: {
+    backgroundColor: '#C9A84C',
+    paddingHorizontal: 8,
     paddingVertical: 2,
     borderRadius: borderRadius.full,
   },
-  badgeText: {
+  nowBadgeText: {
     ...typography.tiny,
-    color: colors.white,
+    color: '#022C22',
     fontWeight: '800',
     textTransform: 'uppercase',
     letterSpacing: 0.5,
-  },
-  emptyState: {
-    alignItems: 'center',
-    paddingTop: spacing.xxxxl,
-    gap: spacing.md,
-  },
-  emptyText: {
-    ...typography.body,
-    color: colors.textSecondary,
   },
 });
