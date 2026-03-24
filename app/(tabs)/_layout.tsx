@@ -1,9 +1,10 @@
 import { Tabs } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { colors, iconSize } from '@/constants/design';
+import { colors } from '@/constants/design';
 import { useLanguageStore } from '@/hooks/useLanguage';
 import { translations } from '@/constants/translations';
 import { View, StyleSheet, Platform } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 
 export default function TabLayout() {
   const { language } = useLanguageStore();
@@ -13,14 +14,25 @@ export default function TabLayout() {
     <Tabs
       screenOptions={{
         headerShown: false,
-        tabBarActiveTintColor: colors.primary,
-        tabBarInactiveTintColor: colors.textSecondary,
+        tabBarActiveTintColor: '#C9A84C',
+        tabBarInactiveTintColor: 'rgba(100, 116, 139, 0.6)',
         tabBarStyle: {
-          backgroundColor: colors.background,
-          borderTopColor: colors.border,
-          height: Platform.OS === 'ios' ? 88 : 64,
-          paddingBottom: Platform.OS === 'ios' ? 32 : 8,
+          backgroundColor: '#FFFFFF',
+          borderTopColor: 'rgba(6, 95, 70, 0.08)',
+          borderTopWidth: 1,
+          height: Platform.OS === 'ios' ? 88 : 68,
+          paddingBottom: Platform.OS === 'ios' ? 28 : 10,
           paddingTop: 8,
+          elevation: 20,
+          shadowColor: '#065F46',
+          shadowOffset: { width: 0, height: -4 },
+          shadowOpacity: 0.08,
+          shadowRadius: 12,
+        },
+        tabBarLabelStyle: {
+          fontSize: 10,
+          fontWeight: '600',
+          letterSpacing: 0.2,
         },
       }}
     >
@@ -33,6 +45,7 @@ export default function TabLayout() {
           ),
         }}
       />
+
       <Tabs.Screen
         name="adhkar"
         options={{
@@ -42,18 +55,26 @@ export default function TabLayout() {
           ),
         }}
       />
+
+      {/* Centre focal scanner button */}
       <Tabs.Screen
         name="scanner"
         options={{
           title: t.scanner,
-          tabBarIcon: ({ color }) => (
-            <View style={styles.scannerIconContainer}>
-              <Ionicons name="scan-circle" size={48} color={colors.white} />
+          tabBarIcon: () => (
+            <View style={styles.scannerBtn}>
+              <LinearGradient
+                colors={['#065F46', '#022C22']}
+                style={styles.scannerGradient}
+              >
+                <Ionicons name="scan" size={26} color="#C9A84C" />
+              </LinearGradient>
             </View>
           ),
-          tabBarLabel: () => null, // Hide label for prominent button
+          tabBarLabel: () => null,
         }}
       />
+
       <Tabs.Screen
         name="ramadan"
         options={{
@@ -63,12 +84,13 @@ export default function TabLayout() {
           ),
         }}
       />
+
       <Tabs.Screen
         name="settings"
         options={{
           title: t.settings,
           tabBarIcon: ({ color, size }) => (
-            <Ionicons name="settings" size={size} color={color} />
+            <Ionicons name="settings-sharp" size={size} color={color} />
           ),
         }}
       />
@@ -77,18 +99,21 @@ export default function TabLayout() {
 }
 
 const styles = StyleSheet.create({
-  scannerIconContainer: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
-    backgroundColor: colors.primary,
+  scannerBtn: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    marginTop: Platform.OS === 'ios' ? -24 : -30,
+    overflow: 'hidden',
+    shadowColor: '#065F46',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.4,
+    shadowRadius: 8,
+    elevation: 10,
+  },
+  scannerGradient: {
+    flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    marginTop: Platform.OS === 'ios' ? -20 : -30,
-    shadowColor: colors.primary,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 8,
   },
 });

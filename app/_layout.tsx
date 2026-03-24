@@ -24,6 +24,7 @@ export default function RootLayout() {
         <Stack.Screen name="qibla" />
         <Stack.Screen name="stats" />
         <Stack.Screen name="adhkar/[id]" />
+        <Stack.Screen name="ai-settings" />
         <Stack.Screen name="+not-found" />
       </Stack>
       <StatusBar style="auto" />

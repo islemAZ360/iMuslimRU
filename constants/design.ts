@@ -98,6 +98,33 @@ export const colors = {
   white: '#FFFFFF',
   black: '#000000',
   transparent: 'transparent',
+
+  // ── Premium Islamic Palette ──────────────────────────────────────────────
+  // Gold family
+  goldPrimary: '#C9A84C',
+  goldLight: '#E8D48B',
+  goldDark: '#A07830',
+  goldTint: '#FDF7E3',
+
+  // Navy family
+  navyDeep: '#0A1628',
+  navyMid: '#162033',
+
+  // Emerald family (deep Islamic green)
+  emeraldDeep: '#022C22',
+  emeraldRich: '#064E3B',
+  emeraldMid: '#065F46',
+  emeraldLight: '#059669',
+  emeraldBright: '#10B981',
+
+  // Glass / translucency helpers
+  glassWhite: 'rgba(255, 255, 255, 0.12)',
+  glassBorder: 'rgba(255, 255, 255, 0.2)',
+  glassDark: 'rgba(0, 0, 0, 0.3)',
+
+  // Islamic theme backgrounds
+  islamicBg1: '#0D2137',
+  islamicBg2: '#0A1628',
 };
 
 // ============================================================================
