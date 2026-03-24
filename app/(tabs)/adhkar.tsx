@@ -1,14 +1,20 @@
-import { View, Text, StyleSheet, FlatList, Pressable, Platform } from 'react-native';
-import { Container, Card, Button } from '@/components/ui';
+import { View, Text, StyleSheet, FlatList, Pressable, Platform, Alert } from 'react-native';
+import { Container, Card } from '@/components/ui';
 import { useI18n } from '@/lib/i18n';
 import { colors, typography, spacing, borderRadius, shadows } from '@/constants/design';
 import { ADHKAR_DATA, Adhkar } from '@/constants/adhkar';
 import { Ionicons } from '@expo/vector-icons';
 import { useState } from 'react';
+import { blink } from '@/lib/blink';
+import { useBlinkAuth } from '@blinkdotnew/react-native';
+import { useQueryClient } from '@tanstack/react-query';
 
 export default function AdhkarScreen() {
   const { t, language } = useI18n();
+  const { user } = useBlinkAuth();
+  const queryClient = useQueryClient();
   const [selectedCategory, setSelectedCategory] = useState<string>('morning');
+  const [counts, setCounts] = useState<Record<string, number>>({});
 
   const categories = [
     { id: 'morning', label: t('morningAdhkar'), icon: 'sunny' },
@@ -19,24 +25,63 @@ export default function AdhkarScreen() {
 
   const filteredAdhkar = ADHKAR_DATA.filter(a => a.category === selectedCategory);
 
-  const renderAdhkarItem = ({ item }: { item: Adhkar }) => (
-    <Card variant="elevated" style={styles.adhkarCard}>
-      <Card.Content>
-        <Text style={styles.adhkarArabic}>{item.text}</Text>
-        <Text style={styles.adhkarTranslation}>
-          {language === 'ru' ? item.translation_ru : item.translation_en}
-        </Text>
-        <View style={styles.cardFooter}>
-          <View style={styles.countBadge}>
-            <Text style={styles.countText}>0 / {item.count}</Text>
+  const handleTasbih = async (item: Adhkar) => {
+    const currentCount = counts[item.id] || 0;
+    if (currentCount < item.count) {
+      setCounts({ ...counts, [item.id]: currentCount + 1 });
+      
+      // If completed
+      if (currentCount + 1 === item.count && user) {
+        try {
+          await blink.db.worshipStats.create({
+            userId: user.id,
+            type: 'adhkar',
+            name: item.id,
+            count: 1
+          });
+          queryClient.invalidateQueries({ queryKey: ['worship_stats'] });
+        } catch (error) {
+          console.error('Failed to save adhkar stats:', error);
+        }
+      }
+    } else {
+      // Reset if user wants to do it again
+      setCounts({ ...counts, [item.id]: 0 });
+    }
+  };
+
+  const renderAdhkarItem = ({ item }: { item: Adhkar }) => {
+    const currentCount = counts[item.id] || 0;
+    const isDone = currentCount === item.count;
+
+    return (
+      <Card variant="elevated" style={[styles.adhkarCard, isDone && styles.doneCard]}>
+        <Card.Content>
+          <Text style={styles.adhkarArabic}>{item.text}</Text>
+          <Text style={styles.adhkarTranslation}>
+            {language === 'ru' ? item.translation_ru : item.translation_en}
+          </Text>
+          <View style={styles.cardFooter}>
+            <View style={[styles.countBadge, isDone && styles.doneBadge]}>
+              <Text style={[styles.countText, isDone && styles.doneText]}>
+                {currentCount} / {item.count}
+              </Text>
+            </View>
+            <Pressable 
+              style={[styles.tasbihButton, isDone && styles.doneTasbihButton]} 
+              onPress={() => handleTasbih(item)}
+            >
+              <Ionicons 
+                name={isDone ? "checkmark" : "finger-print"} 
+                size={24} 
+                color={colors.white} 
+              />
+            </Pressable>
           </View>
-          <Pressable style={styles.tasbihButton}>
-            <Ionicons name="finger-print" size={24} color={colors.white} />
-          </Pressable>
-        </View>
-      </Card.Content>
-    </Card>
-  );
+        </Card.Content>
+      </Card>
+    );
+  };
 
   return (
     <Container safeArea edges={['bottom']} padding="lg" style={styles.container}>
@@ -129,6 +174,11 @@ const styles = StyleSheet.create({
   adhkarCard: {
     borderRadius: borderRadius.xl,
   },
+  doneCard: {
+    backgroundColor: colors.primaryTint,
+    borderColor: colors.primary,
+    borderWidth: 1,
+  },
   adhkarArabic: {
     fontSize: 22,
     lineHeight: 38,
@@ -148,13 +198,19 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   countBadge: {
-    backgroundColor: colors.primaryTint,
+    backgroundColor: colors.backgroundSecondary,
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.xs,
     borderRadius: borderRadius.full,
   },
+  doneBadge: {
+    backgroundColor: colors.white,
+  },
   countText: {
     ...typography.smallBold,
+    color: colors.textSecondary,
+  },
+  doneText: {
     color: colors.primary,
   },
   tasbihButton: {
@@ -165,5 +221,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     ...shadows.md,
+  },
+  doneTasbihButton: {
+    backgroundColor: colors.success,
   },
 });
