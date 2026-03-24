@@ -1,15 +1,9 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { blink } from '@/lib/blink';
+import { supabase, PrayerLog, AdhkarProgress } from '@/lib/supabase';
 import { useProfile } from './useProfile';
 import { DateTime } from 'luxon';
 
-export interface PrayerLog {
-  id: string;
-  userId: string;
-  prayerName: string;
-  date: string;
-  status: 'completed' | 'missed';
-}
+export type { PrayerLog };
 
 export const useWorship = () => {
   const queryClient = useQueryClient();
@@ -18,30 +12,34 @@ export const useWorship = () => {
 
   const { data: prayerLogs, isLoading: isPrayersLoading } = useQuery({
     queryKey: ['prayerLogs', user?.id, today],
-    queryFn: async () => {
+    queryFn: async (): Promise<PrayerLog[]> => {
       if (!user) return [];
-      const logs = await blink.db.prayerLogs.list({
-        where: {
-          userId: user.id,
-          date: today,
-        },
-      });
-      return logs as PrayerLog[];
+
+      const { data, error } = await supabase
+        .from('prayer_logs')
+        .select('*')
+        .eq('user_id', user.id)
+        .eq('date', today);
+
+      if (error) throw error;
+      return (data || []) as PrayerLog[];
     },
     enabled: !!user,
   });
 
   const { data: adhkarProgress, isLoading: isAdhkarLoading } = useQuery({
     queryKey: ['adhkarProgress', user?.id, today],
-    queryFn: async () => {
+    queryFn: async (): Promise<AdhkarProgress[]> => {
       if (!user) return [];
-      const progress = await blink.db.adhkarProgress.list({
-        where: {
-          userId: user.id,
-          date: today,
-        },
-      });
-      return progress;
+
+      const { data, error } = await supabase
+        .from('adhkar_progress')
+        .select('*')
+        .eq('user_id', user.id)
+        .eq('date', today);
+
+      if (error) throw error;
+      return (data || []) as AdhkarProgress[];
     },
     enabled: !!user,
   });
@@ -49,23 +47,61 @@ export const useWorship = () => {
   const logPrayer = useMutation({
     mutationFn: async (prayerName: string) => {
       if (!user) throw new Error('No user');
-      
-      const existing = prayerLogs?.find(l => l.prayerName === prayerName);
+
+      const existing = prayerLogs?.find(l => l.prayer_name === prayerName);
+
       if (existing) {
-        // Toggle: remove if already exists (or update status)
-        // For now, let's just delete it to mark as not completed
-        return await blink.db.prayerLogs.delete(existing.id);
+        // Toggle off: delete the log
+        const { error } = await supabase
+          .from('prayer_logs')
+          .delete()
+          .eq('id', existing.id);
+        if (error) throw error;
       } else {
-        return await blink.db.prayerLogs.create({
-          userId: user.id,
-          prayerName,
-          date: today,
-          status: 'completed',
-        });
+        // Log as completed
+        const { error } = await supabase
+          .from('prayer_logs')
+          .insert({
+            user_id: user.id,
+            prayer_name: prayerName,
+            date: today,
+            status: 'completed',
+          });
+        if (error) throw error;
       }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['prayerLogs', user?.id, today] });
+    },
+  });
+
+  const logAdhkar = useMutation({
+    mutationFn: async ({ dhikrId, count }: { dhikrId: string; count: number }) => {
+      if (!user) throw new Error('No user');
+
+      const existing = adhkarProgress?.find(p => p.dhikr_id === dhikrId);
+
+      if (existing) {
+        const { error } = await supabase
+          .from('adhkar_progress')
+          .update({ count, completed: true })
+          .eq('id', existing.id);
+        if (error) throw error;
+      } else {
+        const { error } = await supabase
+          .from('adhkar_progress')
+          .insert({
+            user_id: user.id,
+            dhikr_id: dhikrId,
+            date: today,
+            count,
+            completed: true,
+          });
+        if (error) throw error;
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['adhkarProgress', user?.id, today] });
     },
   });
 
@@ -75,5 +111,6 @@ export const useWorship = () => {
     isPrayersLoading,
     isAdhkarLoading,
     logPrayer,
+    logAdhkar,
   };
 };

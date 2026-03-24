@@ -6,7 +6,7 @@ import { useLanguageStore } from '@/hooks/useLanguage';
 import { translations } from '@/constants/translations';
 import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
-import { blink } from '@/lib/blink';
+import { supabase } from '@/lib/supabase';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useProfile } from '@/hooks/useProfile';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -36,12 +36,14 @@ export default function Scanner() {
     queryKey: ['scanHistory', user?.id],
     queryFn: async () => {
       if (!user) return [];
-      const scans = await blink.db.halalScans.list({
-        where: { userId: user.id },
-        orderBy: { createdAt: 'desc' },
-        limit: 20,
-      });
-      return scans;
+      const { data, error } = await supabase
+        .from('halal_scans')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false })
+        .limit(20);
+      if (error) throw error;
+      return data || [];
     },
     enabled: !!user,
   });
@@ -133,10 +135,10 @@ export default function Scanner() {
       setResult(scanData);
 
       const userId = user?.id || 'guest_user';
-      await blink.db.halalScans.create({
-        userId,
-        imageUrl: publicUrl,
-        productName: scanData.productName,
+      await supabase.from('halal_scans').insert({
+        user_id: userId,
+        image_url: publicUrl,
+        product_name: scanData.productName,
         result: scanData.status,
         reason: scanData.reason,
         ingredients: JSON.stringify(scanData.ingredients),

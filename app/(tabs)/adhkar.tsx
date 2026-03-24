@@ -5,7 +5,7 @@ import { colors, spacing, typography, shadows, borderRadius } from '@/constants/
 import { useLanguageStore } from '@/hooks/useLanguage';
 import { translations } from '@/constants/translations';
 import { useQuery } from '@tanstack/react-query';
-import { blink } from '@/lib/blink';
+import { supabase } from '@/lib/supabase';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { DateTime } from 'luxon';
@@ -44,15 +44,30 @@ export default function Adhkar() {
   const { data: categories, isLoading } = useQuery({
     queryKey: ['adhkar_categories'],
     queryFn: async () => {
-      const cats = await blink.db.adhkarCategories.list({ orderBy: { sortOrder: 'asc' } });
+      const { data: cats, error } = await supabase
+        .from('adhkar_categories')
+        .select('*')
+        .order('sort_order', { ascending: true });
+
+      if (error) throw error;
+
+      // Get counts for each category
       const counts = await Promise.all(
-        cats.map(async (cat) => {
-          const count = await blink.db.adhkar.count({ where: { categoryId: cat.id } });
-          return { id: cat.id, count };
+        (cats || []).map(async (cat) => {
+          const { count } = await supabase
+            .from('adhkar')
+            .select('*', { count: 'exact', head: true })
+            .eq('category_id', cat.id);
+          return { id: cat.id, count: count || 0 };
         })
       );
-      return cats.map(cat => ({
-        ...cat,
+
+      return (cats || []).map(cat => ({
+        id: cat.id,
+        nameRu: cat.name_ru,
+        nameAr: cat.name_ar,
+        nameEn: cat.name_en,
+        sortOrder: cat.sort_order,
         count: counts.find(c => c.id === cat.id)?.count || 0,
       }));
     },

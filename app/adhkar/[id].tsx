@@ -8,7 +8,8 @@ import { Container } from '@/components/ui';
 import { colors, spacing, typography, shadows, borderRadius } from '@/constants/design';
 import { useLanguageStore } from '@/hooks/useLanguage';
 import { useQuery, useMutation } from '@tanstack/react-query';
-import { blink } from '@/lib/blink';
+import { supabase } from '@/lib/supabase';
+import { useWorship } from '@/hooks/useWorship';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import Animated, {
@@ -37,25 +38,37 @@ export default function AdhkarDetail() {
   const isEveningTime = currentHour >= 16 && currentHour < 24;
   const isOutOfTime = (id === 'morning' && !isMorningTime) || (id === 'evening' && !isEveningTime);
 
+  const { logAdhkar } = useWorship();
+
   const { data: adhkar = [], isLoading } = useQuery({
     queryKey: ['adhkar', id],
     queryFn: async () => {
-      return await blink.db.adhkar.list({
-        where: { categoryId: id as string },
-        orderBy: { sortOrder: 'asc' },
-      });
+      const { data, error } = await supabase
+        .from('adhkar')
+        .select('*')
+        .eq('category_id', id as string)
+        .order('sort_order', { ascending: true });
+
+      if (error) throw error;
+
+      return (data || []).map((item: any) => ({
+        id: item.id,
+        categoryId: item.category_id,
+        textAr: item.text_ar,
+        textRu: item.text_ru,
+        textEn: item.text_en,
+        transliteration: item.transliteration,
+        source: item.source,
+        targetCount: item.target_count,
+        sortOrder: item.sort_order,
+      }));
     },
   });
 
   const progressMutation = useMutation({
     mutationFn: async ({ dhikrId, count }: { dhikrId: string; count: number }) => {
       if (!user) return;
-      return await blink.db.adhkarProgress.create({
-        userId: user.id,
-        dhikrId,
-        count,
-        date: new Date().toISOString().split('T')[0],
-      });
+      return logAdhkar.mutateAsync({ dhikrId, count });
     },
   });
 

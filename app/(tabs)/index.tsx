@@ -108,7 +108,7 @@ export default function Home() {
   };
 
   const PrayerRow = ({ name, time, isNext }: { name: PrayerName; time: string; isNext: boolean }) => {
-    const isCompleted = prayerLogs?.some(log => log.prayerName === name);
+    const isCompleted = prayerLogs?.some(log => log.prayer_name === name);
     return (
       <Pressable onPress={() => logPrayer.mutate(name)} style={styles.prayerRowPressable}>
         <View style={[styles.prayerRow, isNext && styles.nextPrayerRow]}>
@@ -186,7 +186,7 @@ export default function Home() {
               {/* Progress dots */}
               <View style={styles.progressDots}>
                 {Object.keys(prayerData.times).map((name) => {
-                  const isCompleted = prayerLogs?.some(l => l.prayerName === name);
+                  const isCompleted = prayerLogs?.some(l => l.prayer_name === name);
                   const isNext = prayerData.nextPrayer.name === name;
                   return (
                     <View
