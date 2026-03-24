@@ -43,7 +43,7 @@ export const useProfile = () => {
 
       if (error && error.code === 'PGRST116') {
         // Profile doesn't exist, create default
-        const defaultProfile: UserProfile = {
+        const defaultProfile = {
           user_id: userId,
           city: 'Moscow',
           language: 'ru',
