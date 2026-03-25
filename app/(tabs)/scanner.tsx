@@ -508,7 +508,7 @@ export default function Scanner() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.background },
+  container: { flex: 1, backgroundColor: '#0A0A0A' },
   scrollContent: {},
   
   // Header
@@ -881,7 +881,9 @@ const styles = StyleSheet.create({
     width: 100,
     height: 100,
     borderRadius: 50,
-    backgroundColor: colors.primaryTint,
+    backgroundColor: 'rgba(6,95,70,0.18)',
+    borderWidth: 1.5,
+    borderColor: 'rgba(6,95,70,0.35)',
     justifyContent: 'center',
     alignItems: 'center',
   },

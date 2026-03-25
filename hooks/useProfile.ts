@@ -5,6 +5,11 @@ import { blink } from '@/lib/blink';
 
 const USER_ID_KEY = 'imuslim_user_id';
 
+// In-memory cache so userId is available synchronously after first async resolution.
+// This eliminates the "No user" race condition when buttons are pressed before
+// the async useQuery resolves the userId from AsyncStorage.
+let CACHED_USER_ID: string | null = null;
+
 export interface UserProfile {
   id: string;
   userId: string;
@@ -17,16 +22,27 @@ export interface UserProfile {
   updatedAt: string;
 }
 
-// Generate or retrieve a persistent anonymous user ID
+// Generate or retrieve a persistent anonymous user ID.
+// Also populates CACHED_USER_ID so subsequent renders have it synchronously.
 async function getOrCreateUserId(): Promise<string> {
+  // Return memory-cached value immediately (no AsyncStorage round-trip)
+  if (CACHED_USER_ID) return CACHED_USER_ID;
+
   try {
     const existing = await AsyncStorage.getItem(USER_ID_KEY);
-    if (existing) return existing;
+    if (existing) {
+      CACHED_USER_ID = existing;
+      return existing;
+    }
     const newId = `anon_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`;
     await AsyncStorage.setItem(USER_ID_KEY, newId);
+    CACHED_USER_ID = newId;
     return newId;
   } catch {
-    return `anon_${Date.now()}`;
+    // Fallback: generate ephemeral ID if AsyncStorage fails
+    const fallback = `anon_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+    CACHED_USER_ID = fallback;
+    return fallback;
   }
 }
 
@@ -50,7 +66,12 @@ export const useProfile = () => {
         limit: 1,
       });
 
-      if (results.length > 0) return results[0] as UserProfile;
+      if (results.length > 0) {
+        const p = results[0] as UserProfile;
+        // Apply saved language preference from profile on load
+        if (p.language) setLanguage(p.language as any);
+        return p;
+      }
 
       // Profile doesn't exist — create default
       const created = await blink.db.userProfiles.create({
@@ -89,7 +110,11 @@ export const useProfile = () => {
     },
   });
 
-  const user = userId ? { id: userId } : null;
+  // Use the react-query resolved userId OR the in-memory cache for immediate availability.
+  // This means: after the very first successful getOrCreateUserId(), `user` is non-null
+  // on all subsequent renders — even before React Query re-hydrates the component.
+  const effectiveUserId = userId ?? CACHED_USER_ID;
+  const user = effectiveUserId ? { id: effectiveUserId } : null;
 
   return {
     user,

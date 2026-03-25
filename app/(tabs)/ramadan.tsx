@@ -98,14 +98,19 @@ export default function Ramadan() {
   const hijri = getHijriDate();
   const today = DateTime.now().toFormat('yyyy-MM-dd');
 
-  // Fasting logs
+  // Fasting logs — always run even while user is resolving from AsyncStorage.
+  // `user` will be null only on the very first render; subsequent renders have
+  // the in-memory CACHED_USER_ID available via useProfile().
   const { data: fastingLogs } = useQuery({
     queryKey: ['fastingDays', user?.id],
     queryFn: async () => {
-      if (!user) return [];
-      return await blink.db.fastingDays.list({ where: { userId: user.id } });
+      const userId = user?.id;
+      if (!userId) return [];
+      return await blink.db.fastingDays.list({ where: { userId } });
     },
-    enabled: !!user,
+    // Keep enabled: true so the query retries when user becomes non-null.
+    // When user is null the queryFn returns [] which is safe.
+    enabled: true,
   });
 
   const todayFasted = fastingLogs?.find((f: any) => f.date === today);
@@ -113,11 +118,18 @@ export default function Ramadan() {
 
   const toggleFasting = useMutation({
     mutationFn: async (fasted: boolean) => {
-      if (!user) throw new Error('No user');
+      const userId = user?.id;
+      // Silently skip if user ID is not ready yet (edge case on very first render)
+      if (!userId) return;
       if (todayFasted) {
         await blink.db.fastingDays.update((todayFasted as any).id, { fasted: fasted ? 1 : 0 });
       } else {
-        await blink.db.fastingDays.create({ userId: user.id, date: today, fasted: fasted ? 1 : 0, createdAt: new Date().toISOString() });
+        await blink.db.fastingDays.create({
+          userId,
+          date: today,
+          fasted: fasted ? 1 : 0,
+          createdAt: new Date().toISOString(),
+        });
       }
     },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['fastingDays', user?.id] }),
@@ -220,14 +232,14 @@ export default function Ramadan() {
         <Animated.View entering={FadeInUp.delay(150)}>
           <View style={styles.row}>
             <View style={styles.timeCard}>
-              <View style={[styles.timeIconBg, { backgroundColor: '#FEF3C7' }]}>
+              <View style={[styles.timeIconBg, { backgroundColor: 'rgba(217,119,6,0.2)' }]}>
                 <Ionicons name="sunny-outline" size={22} color="#D97706" />
               </View>
               <Text style={styles.cardLabel}>{t.suhoor}</Text>
               <Text style={styles.time}>{times?.fajr || '--:--'}</Text>
             </View>
             <View style={styles.timeCard}>
-              <View style={[styles.timeIconBg, { backgroundColor: '#EDE9FE' }]}>
+              <View style={[styles.timeIconBg, { backgroundColor: 'rgba(124,58,237,0.2)' }]}>
                 <Ionicons name="moon-outline" size={22} color="#7C3AED" />
               </View>
               <Text style={styles.cardLabel}>{t.iftar}</Text>
@@ -253,6 +265,7 @@ export default function Ramadan() {
                   todayFasted && Number(todayFasted.fasted) > 0 && styles.fastingButtonActive,
                 ]}
                 onPress={() => toggleFasting.mutate(true)}
+                disabled={toggleFasting.isPending}
               >
                 <Ionicons
                   name="checkmark-circle-outline"
@@ -273,6 +286,7 @@ export default function Ramadan() {
                   todayFasted && Number(todayFasted.fasted) === 0 && styles.fastingButtonNotActive,
                 ]}
                 onPress={() => toggleFasting.mutate(false)}
+                disabled={toggleFasting.isPending}
               >
                 <Ionicons
                   name="close-circle-outline"
@@ -379,11 +393,11 @@ const styles = StyleSheet.create({
     backgroundColor: colors.backgroundCard,
     padding: spacing.md,
     borderRadius: 20,
-    borderWidth: 1,
-    borderColor: colors.border,
+    borderWidth: 1.5,
+    borderColor: 'rgba(201,168,76,0.2)',
     alignItems: 'center',
     gap: spacing.xs,
-    ...shadows.sm,
+    ...shadows.md,
   },
   timeIconBg: {
     width: 44,

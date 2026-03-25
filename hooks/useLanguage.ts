@@ -6,7 +6,7 @@ const LANGUAGE_KEY = 'imuslim_language';
 
 interface LanguageState {
   language: Language;
-  setLanguage: (language: Language) => void;
+  setLanguage: (language: Language) => Promise<void>;
   loadLanguage: () => Promise<void>;
 }
 

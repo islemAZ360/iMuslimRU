@@ -206,6 +206,11 @@ export default function Settings() {
                   onPress={() => {
                     setLocalProfile(prev => ({ ...prev, language: lang.code }));
                     setLanguage(lang.code);
+                    // Immediately persist language to DB so it survives app restart
+                    // without requiring the user to tap Save.
+                    if (profile?.id) {
+                      updateProfile.mutate({ language: lang.code });
+                    }
                   }}
                   style={[
                     styles.languageButton,
@@ -293,7 +298,7 @@ export default function Settings() {
             <View style={styles.card}>
               <View style={styles.settingRow}>
                 <View style={styles.settingInfo}>
-                  <View style={[styles.settingIconBg, { backgroundColor: '#D1FAE5' }]}>
+                  <View style={[styles.settingIconBg, { backgroundColor: 'rgba(5,150,105,0.15)' }]}>
                     <Ionicons name="notifications-outline" size={18} color={colors.primary} />
                   </View>
                   <Text style={styles.settingLabel}>{t.prayerAlerts}</Text>
@@ -309,7 +314,7 @@ export default function Settings() {
               </View>
               <View style={[styles.settingRow, styles.settingRowLast]}>
                 <View style={styles.settingInfo}>
-                  <View style={[styles.settingIconBg, { backgroundColor: '#FEF3C7' }]}>
+                  <View style={[styles.settingIconBg, { backgroundColor: 'rgba(201,168,76,0.15)' }]}>
                     <Ionicons name="book-outline" size={18} color={colors.accent} />
                   </View>
                   <Text style={styles.settingLabel}>{t.adhkarReminders}</Text>
@@ -365,7 +370,7 @@ export default function Settings() {
             </Text>
             <View style={styles.card}>
               <Pressable style={styles.linkRow} onPress={() => router.push('/qibla')}>
-                <View style={[styles.settingIconBg, { backgroundColor: '#DBEAFE' }]}>
+                <View style={[styles.settingIconBg, { backgroundColor: 'rgba(8,145,178,0.15)' }]}>
                   <Ionicons name="compass-outline" size={18} color={colors.info} />
                 </View>
                 <Text style={[styles.linkText, { marginLeft: spacing.sm }]}>
@@ -377,7 +382,7 @@ export default function Settings() {
                 style={[styles.linkRow, styles.settingRowLast]}
                 onPress={() => router.push('/(tabs)/adhkar')}
               >
-                <View style={[styles.settingIconBg, { backgroundColor: '#D1FAE5' }]}>
+                <View style={[styles.settingIconBg, { backgroundColor: 'rgba(5,150,105,0.15)' }]}>
                   <Ionicons name="book-outline" size={18} color={colors.primary} />
                 </View>
                 <Text style={[styles.linkText, { marginLeft: spacing.sm }]}>
@@ -522,8 +527,8 @@ const styles = StyleSheet.create({
     ...shadows.sm,
   },
   languageButtonActive: {
-    backgroundColor: colors.primary,
-    borderColor: colors.primary,
+    backgroundColor: 'rgba(201,168,76,0.15)',
+    borderColor: '#C9A84C',
   },
   languageFlag: { fontSize: 18 },
   languageButtonText: {
@@ -531,7 +536,7 @@ const styles = StyleSheet.create({
     color: colors.text,
     fontWeight: '600',
   },
-  languageButtonTextActive: { color: colors.white },
+  languageButtonTextActive: { color: '#C9A84C', fontWeight: '700' },
 
   // ── City ──────────────────────────────────────────────────────────────────
   cityInputContainer: {
