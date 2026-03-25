@@ -346,7 +346,7 @@ export default function Scanner() {
                 <Image source={{ uri: image }} style={styles.imagePreview} resizeMode="cover" />
               ) : (
                 <LinearGradient
-                  colors={['#D1FAE5', '#ECFDF5']}
+                  colors={['#0A2818', '#111827']}
                   style={styles.placeholderGradient}
                 >
                   <View style={styles.placeholderIconBg}>
@@ -508,7 +508,7 @@ export default function Scanner() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#F0FDF4' },
+  container: { flex: 1, backgroundColor: colors.background },
   scrollContent: {},
   
   // Header
@@ -609,12 +609,13 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     gap: spacing.sm,
+    backgroundColor: colors.backgroundCard,
   },
   placeholderIconBg: {
     width: 96,
     height: 96,
     borderRadius: 48,
-    backgroundColor: 'rgba(6, 95, 70, 0.1)',
+    backgroundColor: 'rgba(6, 95, 70, 0.2)',
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: spacing.sm,
@@ -633,7 +634,7 @@ const styles = StyleSheet.create({
   },
   loadingOverlay: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(240, 253, 244, 0.92)',
+    backgroundColor: 'rgba(10, 10, 10, 0.88)',
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -684,7 +685,7 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     borderWidth: 2,
     borderColor: colors.primary,
-    backgroundColor: colors.white,
+    backgroundColor: colors.backgroundElevated,
   },
   secondaryBtnText: {
     ...typography.bodyBold,
@@ -699,7 +700,7 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     borderWidth: 2,
     borderColor: colors.primary,
-    backgroundColor: colors.white,
+    backgroundColor: colors.backgroundElevated,
     ...shadows.sm,
   },
   scanAgainText: {
@@ -754,7 +755,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   resultDetails: {
-    backgroundColor: colors.white,
+    backgroundColor: colors.backgroundCard,
     padding: spacing.lg,
     gap: spacing.lg,
   },
@@ -835,13 +836,13 @@ const styles = StyleSheet.create({
   historyItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.white,
+    backgroundColor: colors.backgroundCard,
     borderRadius: 16,
     padding: spacing.md,
     gap: spacing.md,
     ...shadows.sm,
     borderWidth: 1,
-    borderColor: colors.borderLight,
+    borderColor: colors.border,
   },
   historyStatusIndicator: {
     width: 42,

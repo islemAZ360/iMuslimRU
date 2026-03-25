@@ -376,7 +376,7 @@ const styles = StyleSheet.create({
   },
   timeCard: {
     flex: 1,
-    backgroundColor: colors.white,
+    backgroundColor: colors.backgroundCard,
     padding: spacing.md,
     borderRadius: 20,
     borderWidth: 1,
@@ -399,11 +399,11 @@ const styles = StyleSheet.create({
   },
   time: {
     ...typography.h2,
-    color: colors.primary,
+    color: colors.gold,
     fontWeight: '700',
   },
   fastingCard: {
-    backgroundColor: colors.white,
+    backgroundColor: colors.backgroundCard,
     marginHorizontal: spacing.lg,
     padding: spacing.lg,
     borderRadius: 20,
@@ -475,7 +475,7 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   duaCard: {
-    backgroundColor: colors.white,
+    backgroundColor: colors.backgroundCard,
     marginHorizontal: spacing.lg,
     padding: spacing.lg,
     borderRadius: 20,
@@ -486,7 +486,7 @@ const styles = StyleSheet.create({
   },
   duaTitle: {
     ...typography.h4,
-    color: colors.primary,
+    color: colors.gold,
     marginBottom: spacing.md,
     fontWeight: '700',
   },

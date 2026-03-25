@@ -19,6 +19,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import * as Location from 'expo-location';
 import { useRouter } from 'expo-router';
 import Animated, { FadeInUp, FadeIn } from 'react-native-reanimated';
+import { blink } from '@/lib/blink';
 
 const CALCULATION_METHODS = [
   { id: 'MuslimWorldLeague', name: 'Muslim World League', nameRu: 'Мировая Лига' },
@@ -44,6 +45,14 @@ export default function Settings() {
   const [isSaving, setIsSaving] = useState(false);
   const [locationLoading, setLocationLoading] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
+  const [authUser, setAuthUser] = useState<any>(null);
+
+  useEffect(() => {
+    const unsub = blink.auth.onAuthStateChanged((state: any) => {
+      setAuthUser(state.user);
+    });
+    return unsub;
+  }, []);
 
   useEffect(() => {
     if (profile) setLocalProfile(profile);
@@ -133,6 +142,59 @@ export default function Settings() {
           </LinearGradient>
         </Animated.View>
 
+        {/* ── Auth Section ─────────────────────────────────────────────── */}
+        <Animated.View entering={FadeInUp.delay(60)}>
+          <View style={styles.section}>
+            <Text style={styles.sectionLabel}>
+              {language === 'ar' ? 'الحساب' : language === 'ru' ? 'Аккаунт' : 'Account'}
+            </Text>
+            <View style={styles.card}>
+              {authUser ? (
+                <View style={styles.settingRow}>
+                  <View style={styles.settingInfo}>
+                    <View style={[styles.settingIconBg, { backgroundColor: 'rgba(6,95,70,0.2)' }]}>
+                      <Ionicons name="person-circle" size={18} color={colors.primary} />
+                    </View>
+                    <View>
+                      <Text style={styles.settingLabel}>
+                        {authUser.displayName || authUser.email || 'User'}
+                      </Text>
+                      {authUser.email && authUser.displayName && (
+                        <Text style={[styles.settingLabel, { fontSize: 11, color: colors.textTertiary }]}>
+                          {authUser.email}
+                        </Text>
+                      )}
+                    </View>
+                  </View>
+                  <Pressable
+                    onPress={async () => { await blink.auth.signOut(); setAuthUser(null); }}
+                    style={styles.signOutBtn}
+                  >
+                    <Text style={styles.signOutText}>
+                      {language === 'ar' ? 'خروج' : language === 'ru' ? 'Выйти' : 'Sign Out'}
+                    </Text>
+                  </Pressable>
+                </View>
+              ) : (
+                <Pressable style={[styles.linkRow, styles.settingRowLast]} onPress={() => router.push('/auth')}>
+                  <LinearGradient colors={['#065F46', '#022C22']} style={styles.settingIconBg}>
+                    <Ionicons name="log-in-outline" size={18} color={colors.gold} />
+                  </LinearGradient>
+                  <View style={{ flex: 1, marginLeft: spacing.sm }}>
+                    <Text style={styles.linkText}>
+                      {language === 'ar' ? 'تسجيل الدخول / إنشاء حساب' : language === 'ru' ? 'Войти / Зарегистрироваться' : 'Sign In / Sign Up'}
+                    </Text>
+                    <Text style={styles.linkSubtext}>
+                      {'Google · GitHub · Email'}
+                    </Text>
+                  </View>
+                  <Ionicons name="chevron-forward" size={18} color={colors.textTertiary} />
+                </Pressable>
+              )}
+            </View>
+          </View>
+        </Animated.View>
+
         {/* ── Language ─────────────────────────────────────────────────── */}
         <Animated.View entering={FadeInUp.delay(80)}>
           <View style={styles.section}>
@@ -141,7 +203,10 @@ export default function Settings() {
               {languages.map(lang => (
                 <Pressable
                   key={lang.code}
-                  onPress={() => setLocalProfile(prev => ({ ...prev, language: lang.code }))}
+                  onPress={() => {
+                    setLocalProfile(prev => ({ ...prev, language: lang.code }));
+                    setLanguage(lang.code);
+                  }}
                   style={[
                     styles.languageButton,
                     localProfile.language === lang.code && styles.languageButtonActive,
@@ -430,8 +495,10 @@ const styles = StyleSheet.create({
 
   // ── Card shell ────────────────────────────────────────────────────────────
   card: {
-    backgroundColor: colors.white,
+    backgroundColor: colors.backgroundCard,
     borderRadius: borderRadius.xl,
+    borderWidth: 1,
+    borderColor: colors.border,
     ...shadows.sm,
     overflow: 'hidden',
   },
@@ -451,7 +518,7 @@ const styles = StyleSheet.create({
     borderRadius: borderRadius.lg,
     borderWidth: 1.5,
     borderColor: colors.border,
-    backgroundColor: colors.white,
+    backgroundColor: colors.backgroundElevated,
     ...shadows.sm,
   },
   languageButtonActive: {
@@ -494,7 +561,7 @@ const styles = StyleSheet.create({
     borderRadius: borderRadius.full,
     borderWidth: 1.5,
     borderColor: colors.border,
-    backgroundColor: colors.white,
+    backgroundColor: colors.backgroundElevated,
     ...shadows.sm,
   },
   methodButtonActive: {
@@ -519,7 +586,7 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.md,
     paddingHorizontal: spacing.md,
     borderBottomWidth: 1,
-    borderBottomColor: colors.borderLight,
+    borderBottomColor: colors.border,
   },
   settingRowLast: {
     borderBottomWidth: 0,
@@ -558,7 +625,7 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.md,
     paddingHorizontal: spacing.md,
     borderBottomWidth: 1,
-    borderBottomColor: colors.borderLight,
+    borderBottomColor: colors.border,
   },
   linkText: {
     ...typography.body,
@@ -592,17 +659,32 @@ const styles = StyleSheet.create({
     color: colors.white,
   },
 
+  // ── Auth ─────────────────────────────────────────────────────────────────
+  signOutBtn: {
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
+    borderRadius: borderRadius.sm,
+    backgroundColor: 'rgba(220,38,38,0.1)',
+    borderWidth: 1,
+    borderColor: 'rgba(220,38,38,0.2)',
+  },
+  signOutText: {
+    ...typography.small,
+    color: colors.error,
+    fontWeight: '600',
+  },
+
   // ── About card ─────────────────────────────────────────────────────────────
   aboutCard: {
     marginHorizontal: spacing.lg,
     padding: spacing.xl,
-    backgroundColor: colors.white,
+    backgroundColor: colors.backgroundCard,
     borderRadius: borderRadius.xl,
     alignItems: 'center',
     gap: spacing.xs,
     ...shadows.sm,
     borderWidth: 1,
-    borderColor: colors.borderLight,
+    borderColor: colors.border,
   },
   aboutTitle: {
     ...typography.captionBold,
