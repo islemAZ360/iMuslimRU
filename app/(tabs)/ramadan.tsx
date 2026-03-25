@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { View, Text, StyleSheet, ScrollView, Pressable, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Pressable, ActivityIndicator, Alert } from 'react-native';
 import { Container } from '@/components/ui';
 import { colors, spacing, typography, shadows, borderRadius } from '@/constants/design';
 import { useLanguageStore } from '@/hooks/useLanguage';
@@ -20,7 +20,6 @@ function getHijriDate(): { day: number; month: string; year: number; monthAr: st
   const HIJRI_MONTHS_AR = ['محرم','صفر','ربيع الأول','ربيع الثاني','جمادى الأولى','جمادى الآخرة','رجب','شعبان','رمضان','شوال','ذو القعدة','ذو الحجة'];
   const HIJRI_MONTHS_RU = ['Мухаррам','Сафар','Раби\'ул-Авваль','Раби\'ус-Сани','Джумадал-Уля','Джумадал-Ахира','Раджаб','Шаабан','Рамадан','Шавваль','Зуль-Каада','Зуль-Хиджа'];
 
-  // Approximate Hijri conversion (±1 day accuracy)
   const JD = Math.floor((Date.now() / 86400000) + 2440587.5);
   const l = JD - 1948440 + 10632;
   const n = Math.floor((l - 1) / 10631);
@@ -98,19 +97,14 @@ export default function Ramadan() {
   const hijri = getHijriDate();
   const today = DateTime.now().toFormat('yyyy-MM-dd');
 
-  // Fasting logs — always run even while user is resolving from AsyncStorage.
-  // `user` will be null only on the very first render; subsequent renders have
-  // the in-memory CACHED_USER_ID available via useProfile().
-  const { data: fastingLogs } = useQuery({
+  const { data: fastingLogs, refetch: refetchFasting } = useQuery({
     queryKey: ['fastingDays', user?.id],
     queryFn: async () => {
       const userId = user?.id;
       if (!userId) return [];
       return await blink.db.fastingDays.list({ where: { userId } });
     },
-    // Keep enabled: true so the query retries when user becomes non-null.
-    // When user is null the queryFn returns [] which is safe.
-    enabled: true,
+    enabled: !!user?.id,
   });
 
   const todayFasted = fastingLogs?.find((f: any) => f.date === today);
@@ -119,10 +113,17 @@ export default function Ramadan() {
   const toggleFasting = useMutation({
     mutationFn: async (fasted: boolean) => {
       const userId = user?.id;
-      // Silently skip if user ID is not ready yet (edge case on very first render)
-      if (!userId) return;
+      if (!userId) {
+        Alert.alert(
+          language === 'ru' ? 'Ошибка' : 'Error',
+          language === 'ru' ? 'Подождите загрузки профиля' : 'Please wait for profile to load'
+        );
+        return;
+      }
       if (todayFasted) {
-        await blink.db.fastingDays.update((todayFasted as any).id, { fasted: fasted ? 1 : 0 });
+        await blink.db.fastingDays.update((todayFasted as any).id, {
+          fasted: fasted ? 1 : 0,
+        });
       } else {
         await blink.db.fastingDays.create({
           userId,
@@ -132,20 +133,27 @@ export default function Ramadan() {
         });
       }
     },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['fastingDays', user?.id] }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['fastingDays', user?.id] });
+      refetchFasting();
+    },
+    onError: (err) => {
+      console.error('Fasting toggle error:', err);
+    },
   });
 
   useEffect(() => {
     (async () => {
       setIsLoadingTimes(true);
       try {
-        let { status } = await Location.requestForegroundPermissionsAsync();
-        const lat = status === 'granted'
-          ? (await Location.getCurrentPositionAsync({})).coords.latitude
-          : 55.7558;
-        const lon = status === 'granted'
-          ? (await Location.getCurrentPositionAsync({})).coords.longitude
-          : 37.6173;
+        let lat = 55.7558;
+        let lon = 37.6173;
+        const { status } = await Location.requestForegroundPermissionsAsync();
+        if (status === 'granted') {
+          const pos = await Location.getCurrentPositionAsync({});
+          lat = pos.coords.latitude;
+          lon = pos.coords.longitude;
+        }
 
         const coords = new Coordinates(lat, lon);
         const params = CalculationMethod.MuslimWorldLeague();
@@ -155,6 +163,8 @@ export default function Ramadan() {
           fajr: DateTime.fromJSDate(pt.fajr).toFormat('HH:mm'),
           maghrib: DateTime.fromJSDate(pt.maghrib).toFormat('HH:mm'),
         });
+      } catch (e) {
+        console.error('Prayer times error:', e);
       } finally {
         setIsLoadingTimes(false);
       }
@@ -170,10 +180,9 @@ export default function Ramadan() {
       const maghrib = DateTime.fromFormat(times.maghrib, 'HH:mm');
       const fajr = DateTime.fromFormat(times.fajr, 'HH:mm');
 
-      let target: DateTime;
       const currentlyFasting = now > fajr && now < maghrib;
       setIsFasting(currentlyFasting);
-      target = currentlyFasting ? maghrib : (now > maghrib ? fajr.plus({ days: 1 }) : fajr);
+      const target = currentlyFasting ? maghrib : (now > maghrib ? fajr.plus({ days: 1 }) : fajr);
 
       const diff = target.diff(now, ['hours', 'minutes', 'seconds']);
       const hh = String(Math.floor(diff.hours)).padStart(2, '0');
@@ -192,17 +201,20 @@ export default function Ramadan() {
     return hijri.month;
   };
 
+  const isFastedToday = todayFasted && Number(todayFasted.fasted) > 0;
+  const isNotFastedToday = todayFasted && Number(todayFasted.fasted) === 0;
+
   return (
-    <Container style={styles.container}>
+    <View style={styles.screen}>
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
         <Text style={styles.title}>{t.title}</Text>
 
         {/* Hijri Date */}
         <Animated.View entering={FadeInUp.delay(50)}>
           <View style={styles.hijriCard}>
-            <Ionicons name="calendar-outline" size={18} color={colors.accent} />
+            <Ionicons name="calendar-outline" size={18} color={colors.gold} />
             <Text style={styles.hijriText}>
-              {hijri.day} {getHijriMonthName()} {hijri.year} {t.hijriDate ? `· ${t.hijriDate}` : ''}
+              {hijri.day} {getHijriMonthName()} {hijri.year}
             </Text>
           </View>
         </Animated.View>
@@ -210,15 +222,15 @@ export default function Ramadan() {
         {/* Main Countdown Card */}
         <Animated.View entering={FadeInUp.delay(100)}>
           <LinearGradient
-            colors={isFasting ? [colors.primary, '#1565C0'] : ['#7C3AED', '#5B21B6']}
+            colors={isFasting ? [colors.emeraldRich, colors.emeraldDeep] : ['#1A0B2E', '#2D1B69']}
             style={styles.mainCard}
           >
-            <Ionicons name="moon" size={44} color="rgba(255,255,255,0.9)" />
+            <Ionicons name="moon" size={44} color={colors.gold} />
             <Text style={styles.countdownTitle}>
               {isFasting ? t.untilIftar : t.untilSuhoor}
             </Text>
             {isLoadingTimes ? (
-              <ActivityIndicator color={colors.white} size="large" style={{ marginTop: spacing.md }} />
+              <ActivityIndicator color={colors.gold} size="large" style={{ marginTop: spacing.md }} />
             ) : (
               <Text style={styles.countdown}>{countdown || '00:00:00'}</Text>
             )}
@@ -239,8 +251,8 @@ export default function Ramadan() {
               <Text style={styles.time}>{times?.fajr || '--:--'}</Text>
             </View>
             <View style={styles.timeCard}>
-              <View style={[styles.timeIconBg, { backgroundColor: 'rgba(124,58,237,0.2)' }]}>
-                <Ionicons name="moon-outline" size={22} color="#7C3AED" />
+              <View style={[styles.timeIconBg, { backgroundColor: 'rgba(201,168,76,0.2)' }]}>
+                <Ionicons name="moon-outline" size={22} color={colors.gold} />
               </View>
               <Text style={styles.cardLabel}>{t.iftar}</Text>
               <Text style={styles.time}>{times?.maghrib || '--:--'}</Text>
@@ -252,55 +264,76 @@ export default function Ramadan() {
         <Animated.View entering={FadeInUp.delay(200)}>
           <View style={styles.fastingCard}>
             <View style={styles.fastingHeader}>
-              <Ionicons name="fitness-outline" size={20} color={colors.primary} />
+              <Ionicons name="fitness-outline" size={20} color={colors.gold} />
               <Text style={styles.fastingTitle}>{t.fastingTracker}</Text>
               <View style={styles.fastingCountBadge}>
                 <Text style={styles.fastingCountText}>{fastingCount} {t.fastingDays}</Text>
               </View>
             </View>
-            <View style={styles.fastingButtons}>
-              <Pressable
-                style={[
-                  styles.fastingButton,
-                  todayFasted && Number(todayFasted.fasted) > 0 && styles.fastingButtonActive,
-                ]}
-                onPress={() => toggleFasting.mutate(true)}
-                disabled={toggleFasting.isPending}
-              >
-                <Ionicons
-                  name="checkmark-circle-outline"
-                  size={22}
-                  color={todayFasted && Number(todayFasted.fasted) > 0 ? colors.white : colors.success}
-                />
-                <Text style={[
-                  styles.fastingButtonText,
-                  todayFasted && Number(todayFasted.fasted) > 0 && styles.fastingButtonTextActive,
-                ]}>
-                  {t.didFast}
+
+            {!user?.id && (
+              <View style={styles.loadingRow}>
+                <ActivityIndicator size="small" color={colors.gold} />
+                <Text style={styles.loadingText}>
+                  {language === 'ru' ? 'Загрузка...' : 'Loading...'}
                 </Text>
-              </Pressable>
-              <Pressable
-                style={[
-                  styles.fastingButton,
-                  styles.fastingButtonNot,
-                  todayFasted && Number(todayFasted.fasted) === 0 && styles.fastingButtonNotActive,
-                ]}
-                onPress={() => toggleFasting.mutate(false)}
-                disabled={toggleFasting.isPending}
-              >
-                <Ionicons
-                  name="close-circle-outline"
-                  size={22}
-                  color={todayFasted && Number(todayFasted.fasted) === 0 ? colors.white : colors.error}
-                />
-                <Text style={[
-                  styles.fastingButtonText,
-                  todayFasted && Number(todayFasted.fasted) === 0 && styles.fastingButtonTextActive,
-                ]}>
-                  {t.didNotFast}
-                </Text>
-              </Pressable>
-            </View>
+              </View>
+            )}
+
+            {user?.id && (
+              <View style={styles.fastingButtons}>
+                <Pressable
+                  style={[
+                    styles.fastingButton,
+                    isFastedToday && styles.fastingButtonActive,
+                  ]}
+                  onPress={() => toggleFasting.mutate(true)}
+                  disabled={toggleFasting.isPending}
+                >
+                  {toggleFasting.isPending ? (
+                    <ActivityIndicator size="small" color={isFastedToday ? colors.backgroundCard : colors.success} />
+                  ) : (
+                    <Ionicons
+                      name="checkmark-circle-outline"
+                      size={22}
+                      color={isFastedToday ? colors.backgroundCard : colors.success}
+                    />
+                  )}
+                  <Text style={[
+                    styles.fastingButtonText,
+                    isFastedToday && styles.fastingButtonTextActive,
+                  ]}>
+                    {t.didFast}
+                  </Text>
+                </Pressable>
+
+                <Pressable
+                  style={[
+                    styles.fastingButton,
+                    styles.fastingButtonNot,
+                    isNotFastedToday && styles.fastingButtonNotActive,
+                  ]}
+                  onPress={() => toggleFasting.mutate(false)}
+                  disabled={toggleFasting.isPending}
+                >
+                  {toggleFasting.isPending ? (
+                    <ActivityIndicator size="small" color={isNotFastedToday ? colors.backgroundCard : colors.error} />
+                  ) : (
+                    <Ionicons
+                      name="close-circle-outline"
+                      size={22}
+                      color={isNotFastedToday ? colors.backgroundCard : colors.error}
+                    />
+                  )}
+                  <Text style={[
+                    styles.fastingButtonText,
+                    isNotFastedToday && styles.fastingButtonTextActive,
+                  ]}>
+                    {t.didNotFast}
+                  </Text>
+                </Pressable>
+              </View>
+            )}
           </View>
         </Animated.View>
 
@@ -323,16 +356,16 @@ export default function Ramadan() {
           </Animated.View>
         ))}
       </ScrollView>
-    </Container>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { padding: 0 },
+  screen: { flex: 1, backgroundColor: colors.background },
   scrollContent: { paddingBottom: spacing.xxxxl },
   title: {
     ...typography.h1,
-    color: colors.primary,
+    color: colors.gold,
     marginBottom: spacing.md,
     paddingHorizontal: spacing.lg,
     paddingTop: spacing.md,
@@ -344,15 +377,17 @@ const styles = StyleSheet.create({
     gap: spacing.xs,
     marginHorizontal: spacing.lg,
     marginBottom: spacing.md,
-    backgroundColor: colors.primaryTint,
+    backgroundColor: 'rgba(201,168,76,0.12)',
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.sm,
     borderRadius: borderRadius.full,
     alignSelf: 'flex-start',
+    borderWidth: 1,
+    borderColor: colors.borderGold,
   },
   hijriText: {
     ...typography.captionBold,
-    color: colors.primary,
+    color: colors.gold,
   },
   mainCard: {
     padding: spacing.xxl,
@@ -360,11 +395,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginHorizontal: spacing.lg,
     marginBottom: spacing.md,
+    borderWidth: 1,
+    borderColor: colors.borderGold,
     ...shadows.xl,
   },
   countdownTitle: {
     ...typography.captionBold,
-    color: 'rgba(255,255,255,0.85)',
+    color: 'rgba(201,168,76,0.85)',
     marginTop: spacing.md,
     textTransform: 'uppercase',
     letterSpacing: 1,
@@ -372,14 +409,14 @@ const styles = StyleSheet.create({
   countdown: {
     fontSize: 44,
     fontWeight: '800',
-    color: colors.white,
+    color: colors.gold,
     marginTop: spacing.xs,
     fontVariant: ['tabular-nums'],
     letterSpacing: 2,
   },
   countdownSubtitle: {
     ...typography.caption,
-    color: 'rgba(255,255,255,0.7)',
+    color: colors.textSecondary,
     marginTop: spacing.sm,
   },
   row: {
@@ -393,8 +430,8 @@ const styles = StyleSheet.create({
     backgroundColor: colors.backgroundCard,
     padding: spacing.md,
     borderRadius: 20,
-    borderWidth: 1.5,
-    borderColor: 'rgba(201,168,76,0.2)',
+    borderWidth: 1,
+    borderColor: colors.border,
     alignItems: 'center',
     gap: spacing.xs,
     ...shadows.md,
@@ -438,14 +475,27 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   fastingCountBadge: {
-    backgroundColor: colors.primaryTint,
+    backgroundColor: 'rgba(201,168,76,0.12)',
     paddingHorizontal: spacing.sm,
     paddingVertical: 4,
     borderRadius: borderRadius.full,
+    borderWidth: 1,
+    borderColor: colors.borderGold,
   },
   fastingCountText: {
     ...typography.captionBold,
-    color: colors.primary,
+    color: colors.gold,
+  },
+  loadingRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: spacing.sm,
+    paddingVertical: spacing.md,
+  },
+  loadingText: {
+    ...typography.caption,
+    color: colors.textSecondary,
   },
   fastingButtons: {
     flexDirection: 'row',
@@ -479,7 +529,7 @@ const styles = StyleSheet.create({
     color: colors.text,
   },
   fastingButtonTextActive: {
-    color: colors.white,
+    color: colors.backgroundCard,
   },
   sectionTitle: {
     ...typography.h2,

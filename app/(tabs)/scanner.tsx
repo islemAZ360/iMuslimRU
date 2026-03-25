@@ -11,7 +11,6 @@ import {
   Alert,
   Dimensions,
 } from 'react-native';
-import { Container, Card } from '@/components/ui';
 import { colors, spacing, typography, shadows, borderRadius } from '@/constants/design';
 import { useLanguageStore } from '@/hooks/useLanguage';
 import { translations } from '@/constants/translations';
@@ -40,6 +39,9 @@ interface ScanResult {
   doubtfulIngredients?: string[];
 }
 
+// Default Blink AI model — works without any user API key
+const DEFAULT_MODEL = 'google/gemini-2.0-flash';
+
 export default function Scanner() {
   const { language } = useLanguageStore();
   const t = translations[language].scanner;
@@ -52,6 +54,7 @@ export default function Scanner() {
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<ScanResult | null>(null);
   const [showHistory, setShowHistory] = useState(false);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   const { data: scanHistory } = useQuery({
     queryKey: ['scanHistory', user?.id],
@@ -108,9 +111,11 @@ export default function Scanner() {
   const processImage = async (uri: string) => {
     setImage(uri);
     setResult(null);
+    setErrorMsg(null);
     setLoading(true);
 
     try {
+      // Upload image to get a public HTTPS URL
       const filename = uri.split('/').pop() || `scan_${Date.now()}.jpg`;
       const ext = filename.split('.').pop() || 'jpg';
       const response = await fetch(uri);
@@ -123,12 +128,9 @@ export default function Scanner() {
 
       const languageName = language === 'ru' ? 'Russian' : language === 'ar' ? 'Arabic' : 'English';
 
-      // Build model string based on configured settings
-      const providerInfo = getProviderInfo(aiSettings.provider);
-      let modelToUse = 'google/gemini-2.0-flash'; // default
-
+      // Choose model: use configured provider if set, else fallback to Blink's default Gemini
+      let modelToUse = DEFAULT_MODEL;
       if (aiSettings.isConfigured()) {
-        // Map provider + model to appropriate format for Blink AI
         const providerModelMap: Record<string, string> = {
           openai: `openai/${aiSettings.model}`,
           anthropic: `anthropic/${aiSettings.model}`,
@@ -141,24 +143,37 @@ export default function Scanner() {
           meta: `meta/${aiSettings.model}`,
           ollama: `ollama/${aiSettings.model}`,
         };
-        modelToUse = providerModelMap[aiSettings.provider] || modelToUse;
+        modelToUse = providerModelMap[aiSettings.provider] || DEFAULT_MODEL;
       }
 
       const { object } = await blink.ai.generateObject({
         model: modelToUse,
-        prompt: `You are an expert Islamic Halal Food Analyst. Analyze this product image: ${publicUrl}
-        
-        Examine the ingredients label carefully. Determine if the product is:
-        - Halal: All ingredients are permissible in Islam
-        - Haram: Contains clearly forbidden ingredients (pork, alcohol, non-halal meat, etc.)
-        - Doubtful: Contains ambiguous ingredients (certain E-numbers, unclear animal derivatives)
-        
-        Consider: E-numbers, gelatin sources, alcohol in flavorings, meat sources, emulsifiers, carmine (E120), L-cysteine (E920), rennet.
-        Provide the productName and reason in ${languageName}.
-        
-        Categorize ingredients into halal, haram, and doubtful lists.
-        
-        Return JSON only:`,
+        messages: [
+          {
+            role: 'user',
+            content: [
+              {
+                type: 'text',
+                text: `You are an expert Islamic Halal Food Analyst. Analyze this product image.
+
+Examine the ingredients label carefully. Determine if the product is:
+- Halal: All ingredients are permissible in Islam
+- Haram: Contains clearly forbidden ingredients (pork, alcohol, non-halal meat, etc.)
+- Doubtful: Contains ambiguous ingredients (certain E-numbers, unclear animal derivatives)
+
+Consider: E-numbers, gelatin sources, alcohol in flavorings, meat sources, emulsifiers, carmine (E120), L-cysteine (E920), rennet.
+
+Provide the productName and reason in ${languageName}.
+Categorize ingredients into halal, haram, and doubtful lists.
+If no ingredients label is visible, analyze the product packaging and name.`,
+              },
+              {
+                type: 'image',
+                image: publicUrl,
+              },
+            ],
+          },
+        ],
         schema: {
           type: 'object',
           properties: {
@@ -178,6 +193,7 @@ export default function Scanner() {
       const scanData = object as ScanResult;
       setResult(scanData);
 
+      // Save to DB
       const userId = user?.id || 'guest_user';
       await blink.db.halalScans.create({
         userId,
@@ -191,9 +207,16 @@ export default function Scanner() {
       });
 
       queryClient.invalidateQueries({ queryKey: ['scanHistory', user?.id] });
-    } catch (error) {
+    } catch (error: any) {
       console.error('Scan error:', error);
-      Alert.alert('Error', t.scanError);
+      const msg = error?.message || t.scanError;
+      setErrorMsg(msg);
+      Alert.alert(
+        language === 'ru' ? 'Ошибка анализа' : 'Scan Error',
+        language === 'ru'
+          ? 'Не удалось проанализировать изображение. Проверьте подключение к интернету.'
+          : 'Failed to analyze image. Check your internet connection.'
+      );
     } finally {
       setLoading(false);
     }
@@ -233,11 +256,13 @@ export default function Scanner() {
 
   const providerInfo = getProviderInfo(aiSettings.provider);
   const isAIConfigured = aiSettings.isConfigured();
+  const modelLabel = isAIConfigured
+    ? `${providerInfo?.name || aiSettings.provider} · ${aiSettings.model}`
+    : 'Gemini AI (Default)';
 
   if (showHistory) {
     return (
       <View style={styles.container}>
-        {/* History Header */}
         <LinearGradient colors={['#022C22', '#065F46']} style={styles.historyHeaderGrad}>
           <Pressable onPress={() => setShowHistory(false)} style={styles.backBtn}>
             <Ionicons name="arrow-back" size={22} color={colors.white} />
@@ -265,7 +290,7 @@ export default function Scanner() {
                       {DateTime.fromISO(scan.createdAt).toFormat('dd/MM/yyyy HH:mm')}
                     </Text>
                   </View>
-                  <View style={[styles.historyBadge, { backgroundColor: getStatusColor(scan.result) + '18' }]}>
+                  <View style={[styles.historyBadge, { backgroundColor: getStatusColor(scan.result) + '22' }]}>
                     <Text style={[styles.historyBadgeText, { color: getStatusColor(scan.result) }]}>
                       {getStatusText(scan.result)}
                     </Text>
@@ -302,11 +327,7 @@ export default function Scanner() {
           <View style={styles.headerContent}>
             <View>
               <Text style={styles.headerTitle}>{t.title}</Text>
-              <Text style={styles.headerSubtitle}>
-                {isAIConfigured
-                  ? `${providerInfo?.name || aiSettings.provider} · ${aiSettings.model}`
-                  : (language === 'ru' ? 'Настройте ИИ для анализа' : language === 'ar' ? 'قم بتكوين الذكاء الاصطناعي' : 'Configure AI for analysis')}
-              </Text>
+              <Text style={styles.headerSubtitle}>{modelLabel}</Text>
             </View>
             <Pressable onPress={() => setShowHistory(true)} style={styles.historyBtn}>
               <Ionicons name="time" size={20} color="#C9A84C" />
@@ -314,28 +335,23 @@ export default function Scanner() {
           </View>
 
           {/* AI Status row */}
-          {!isAIConfigured && (
-            <Pressable onPress={() => router.push('/ai-settings')} style={styles.aiWarningBanner}>
-              <Ionicons name="hardware-chip-outline" size={16} color="#C9A84C" />
-              <Text style={styles.aiWarningText}>
-                {language === 'ru'
-                  ? 'Нажмите чтобы настроить AI для точного анализа'
+          <Pressable onPress={() => router.push('/ai-settings')} style={styles.aiStatusBanner}>
+            <Ionicons
+              name={isAIConfigured ? 'checkmark-circle' : 'hardware-chip-outline'}
+              size={16}
+              color={isAIConfigured ? '#86EFAC' : '#C9A84C'}
+            />
+            <Text style={[styles.aiBannerText, isAIConfigured && styles.aiBannerTextOk]}>
+              {isAIConfigured
+                ? `${providerInfo?.name} · ${aiSettings.model}`
+                : language === 'ru'
+                  ? 'Gemini AI · Нажмите для настройки'
                   : language === 'ar'
-                  ? 'انقر لتكوين الذكاء الاصطناعي للتحليل الدقيق'
-                  : 'Tap to configure AI for accurate analysis'}
-              </Text>
-              <Ionicons name="chevron-forward" size={14} color="#C9A84C" />
-            </Pressable>
-          )}
-
-          {isAIConfigured && (
-            <View style={styles.aiOkBanner}>
-              <Ionicons name="checkmark-circle" size={16} color="#86EFAC" />
-              <Text style={styles.aiOkText}>
-                {providerInfo?.name} · {aiSettings.model}
-              </Text>
-            </View>
-          )}
+                  ? 'Gemini AI · انقر للإعداد'
+                  : 'Gemini AI · Tap to configure'}
+            </Text>
+            <Ionicons name="chevron-forward" size={14} color={isAIConfigured ? '#86EFAC' : '#C9A84C'} />
+          </Pressable>
         </LinearGradient>
 
         {/* Image Preview */}
@@ -370,14 +386,20 @@ export default function Scanner() {
                       <ActivityIndicator size="large" color={colors.primary} />
                     </View>
                     <Text style={styles.loadingTitle}>{t.scanning}</Text>
-                    <Text style={styles.loadingSubtitle}>
-                      {isAIConfigured ? `${providerInfo?.name} · ${aiSettings.model}` : 'AI Analysis'}
-                    </Text>
+                    <Text style={styles.loadingSubtitle}>{modelLabel}</Text>
                   </View>
                 </View>
               )}
             </View>
           </Animated.View>
+
+          {/* Error message */}
+          {errorMsg && !loading && (
+            <Animated.View entering={FadeInUp} style={styles.errorBanner}>
+              <Ionicons name="alert-circle-outline" size={18} color={colors.error} />
+              <Text style={styles.errorText} numberOfLines={2}>{errorMsg}</Text>
+            </Animated.View>
+          )}
 
           {/* Action Buttons */}
           {!loading && !result && (
@@ -399,7 +421,7 @@ export default function Scanner() {
           {result && !loading && (
             <Pressable
               style={styles.scanAgainBtn}
-              onPress={() => { setResult(null); setImage(null); }}
+              onPress={() => { setResult(null); setImage(null); setErrorMsg(null); }}
             >
               <Ionicons name="scan-outline" size={20} color={colors.primary} />
               <Text style={styles.scanAgainText}>{t.scanButton}</Text>
@@ -417,7 +439,6 @@ export default function Scanner() {
                 <Text style={styles.statusText}>{getStatusText(result.status)}</Text>
                 <Text style={styles.statusProductName} numberOfLines={1}>{result.productName}</Text>
               </View>
-              {/* Confidence */}
               <View style={styles.confidenceBadge}>
                 <Text style={styles.confidenceValue}>{Math.round(result.confidence * 100)}%</Text>
                 <Text style={styles.confidenceLabel}>{t.confidence}</Text>
@@ -450,8 +471,8 @@ export default function Scanner() {
                   </View>
                   <View style={styles.ingredientsList}>
                     {result.haramIngredients.map((item, index) => (
-                      <View key={index} style={[styles.ingredientTag, { backgroundColor: colors.errorTint }]}>
-                        <Text style={[styles.ingredientText, { color: colors.errorDark }]}>{item}</Text>
+                      <View key={index} style={[styles.ingredientTag, { backgroundColor: colors.errorTint, borderColor: colors.error + '44' }]}>
+                        <Text style={[styles.ingredientText, { color: colors.errorLight }]}>{item}</Text>
                       </View>
                     ))}
                   </View>
@@ -465,14 +486,14 @@ export default function Scanner() {
                     <View style={[styles.detailIconBg, { backgroundColor: colors.warningTint }]}>
                       <Ionicons name="warning" size={18} color={colors.warning} />
                     </View>
-                    <Text style={[styles.detailTitle, { color: colors.warningDark }]}>
+                    <Text style={[styles.detailTitle, { color: colors.warningLight }]}>
                       {language === 'ru' ? 'Сомнительные ингредиенты' : language === 'ar' ? 'مكونات مشكوك بها' : 'Doubtful Ingredients'}
                     </Text>
                   </View>
                   <View style={styles.ingredientsList}>
                     {result.doubtfulIngredients.map((item, index) => (
-                      <View key={index} style={[styles.ingredientTag, { backgroundColor: colors.warningTint }]}>
-                        <Text style={[styles.ingredientText, { color: colors.warningDark }]}>{item}</Text>
+                      <View key={index} style={[styles.ingredientTag, { backgroundColor: colors.warningTint, borderColor: colors.warning + '44' }]}>
+                        <Text style={[styles.ingredientText, { color: colors.warningLight }]}>{item}</Text>
                       </View>
                     ))}
                   </View>
@@ -508,9 +529,9 @@ export default function Scanner() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#0A0A0A' },
+  container: { flex: 1, backgroundColor: colors.background },
   scrollContent: {},
-  
+
   // Header
   headerGrad: {
     paddingTop: Platform.OS === 'ios' ? 54 : 40,
@@ -555,40 +576,26 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: 'rgba(201, 168, 76, 0.3)',
   },
-  aiWarningBanner: {
+  aiStatusBanner: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.xs,
-    backgroundColor: 'rgba(201, 168, 76, 0.12)',
+    backgroundColor: 'rgba(201, 168, 76, 0.1)',
     borderWidth: 1,
-    borderColor: 'rgba(201, 168, 76, 0.3)',
+    borderColor: 'rgba(201, 168, 76, 0.25)',
     borderRadius: borderRadius.lg,
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.sm,
     marginTop: spacing.md,
   },
-  aiWarningText: {
+  aiBannerText: {
     flex: 1,
     fontSize: 12,
     color: 'rgba(201, 168, 76, 0.9)',
     fontWeight: '500',
   },
-  aiOkBanner: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.xs,
-    backgroundColor: 'rgba(134, 239, 172, 0.12)',
-    borderWidth: 1,
-    borderColor: 'rgba(134, 239, 172, 0.3)',
-    borderRadius: borderRadius.lg,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-    marginTop: spacing.md,
-  },
-  aiOkText: {
-    fontSize: 12,
+  aiBannerTextOk: {
     color: '#86EFAC',
-    fontWeight: '600',
   },
 
   // Preview
@@ -658,6 +665,22 @@ const styles = StyleSheet.create({
   loadingSubtitle: {
     ...typography.small,
     color: colors.textSecondary,
+  },
+  errorBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    backgroundColor: colors.errorTint,
+    borderWidth: 1,
+    borderColor: colors.error + '44',
+    borderRadius: borderRadius.lg,
+    padding: spacing.md,
+    marginBottom: spacing.md,
+  },
+  errorText: {
+    ...typography.small,
+    color: colors.errorLight,
+    flex: 1,
   },
   actionButtons: { gap: spacing.md },
   primaryActionBtn: {

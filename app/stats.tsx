@@ -69,21 +69,18 @@ export default function Stats() {
   const stats = useMemo(() => {
     if (!prayerLogs) return null;
 
-    // Weekly prayer data (prayers per day this week)
     const weeklyPrayers = last7Days.map(date => {
-      const count = prayerLogs.filter(l => l.date === date).length;
+      const count = prayerLogs.filter((l: any) => l.date === date).length;
       return { date, count };
     });
 
-    // Total prayers
     const totalPrayers = prayerLogs.length;
 
-    // Streak calculation
     let streak = 0;
     let checkDate = DateTime.now();
     while (true) {
       const dateStr = checkDate.toFormat('yyyy-MM-dd');
-      const dayCount = prayerLogs.filter(l => l.date === dateStr).length;
+      const dayCount = prayerLogs.filter((l: any) => l.date === dateStr).length;
       if (dayCount >= 5) {
         streak++;
         checkDate = checkDate.minus({ days: 1 });
@@ -92,10 +89,9 @@ export default function Stats() {
       }
     }
 
-    // Best streak (simplified: just show current for now)
     const completionRate = totalPrayers > 0
       ? Math.round((totalPrayers / Math.max(1, Object.keys(
-          prayerLogs.reduce((acc: any, l) => { acc[l.date] = true; return acc; }, {})
+          prayerLogs.reduce((acc: any, l: any) => { acc[l.date] = true; return acc; }, {})
         ).length * 5)) * 100)
       : 0;
 
@@ -105,7 +101,7 @@ export default function Stats() {
       streak,
       completionRate,
       totalAdhkar: adhkarLogs?.length || 0,
-      totalFasting: fastingLogs?.filter((f: any) => f.fasted === true).length || 0,
+      totalFasting: fastingLogs?.filter((f: any) => Number(f.fasted) > 0).length || 0,
       totalScans: scanLogs?.length || 0,
     };
   }, [prayerLogs, adhkarLogs, fastingLogs, scanLogs]);
@@ -123,9 +119,9 @@ export default function Stats() {
   const maxWeeklyPrayers = Math.max(...(stats?.weeklyPrayers.map(d => d.count) || [1]), 1);
 
   return (
-    <Container style={styles.container}>
+    <View style={styles.screen}>
       {/* Header */}
-      <LinearGradient colors={[colors.primary, '#1565C0']} style={styles.header}>
+      <LinearGradient colors={[colors.emeraldRich, colors.emeraldDeep]} style={styles.header}>
         <Pressable onPress={() => router.back()} style={styles.backButton}>
           <Ionicons name="arrow-back" size={24} color={colors.white} />
         </Pressable>
@@ -141,23 +137,23 @@ export default function Stats() {
             {/* Summary Cards */}
             <Animated.View entering={FadeInUp.delay(50)}>
               <View style={styles.summaryGrid}>
-                <View style={[styles.summaryCard, { backgroundColor: colors.primary }]}>
-                  <Ionicons name="star" size={22} color={colors.white} />
+                <View style={[styles.summaryCard, { backgroundColor: colors.emeraldMid }]}>
+                  <Ionicons name="star" size={22} color={colors.gold} />
                   <Text style={styles.summaryValue}>{stats?.streak || 0}</Text>
                   <Text style={styles.summaryLabel}>{wt.streak}</Text>
                 </View>
-                <View style={[styles.summaryCard, { backgroundColor: '#10B981' }]}>
-                  <Ionicons name="checkmark-circle" size={22} color={colors.white} />
+                <View style={[styles.summaryCard, { backgroundColor: '#064E3B' }]}>
+                  <Ionicons name="checkmark-circle" size={22} color={colors.gold} />
                   <Text style={styles.summaryValue}>{stats?.totalPrayers || 0}</Text>
                   <Text style={styles.summaryLabel}>{st.prayers}</Text>
                 </View>
-                <View style={[styles.summaryCard, { backgroundColor: '#F59E0B' }]}>
-                  <Ionicons name="moon" size={22} color={colors.white} />
+                <View style={[styles.summaryCard, { backgroundColor: '#1C1A0F' }]}>
+                  <Ionicons name="moon" size={22} color={colors.gold} />
                   <Text style={styles.summaryValue}>{stats?.totalFasting || 0}</Text>
                   <Text style={styles.summaryLabel}>{st.fasting}</Text>
                 </View>
-                <View style={[styles.summaryCard, { backgroundColor: '#8B5CF6' }]}>
-                  <Ionicons name="scan" size={22} color={colors.white} />
+                <View style={[styles.summaryCard, { backgroundColor: '#1A1235' }]}>
+                  <Ionicons name="scan" size={22} color={colors.gold} />
                   <Text style={styles.summaryValue}>{stats?.totalScans || 0}</Text>
                   <Text style={styles.summaryLabel}>{st.scans}</Text>
                 </View>
@@ -168,7 +164,7 @@ export default function Stats() {
             <Animated.View entering={FadeInUp.delay(100)}>
               <View style={styles.chartCard}>
                 <View style={styles.chartHeader}>
-                  <Ionicons name="bar-chart-outline" size={20} color={colors.primary} />
+                  <Ionicons name="bar-chart-outline" size={20} color={colors.gold} />
                   <Text style={styles.chartTitle}>{st.thisWeek} — {st.prayers}</Text>
                 </View>
                 <View style={styles.chartBars}>
@@ -180,7 +176,7 @@ export default function Stats() {
                         <Text style={styles.barValue}>{day.count || ''}</Text>
                         <View style={styles.barBg}>
                           <LinearGradient
-                            colors={isToday ? [colors.primary, '#1565C0'] : ['#93C5FD', '#BFDBFE']}
+                            colors={isToday ? [colors.gold, colors.goldDark] : [colors.emeraldMid, colors.emeraldRich]}
                             style={[styles.barFill, { height: `${Math.max(pct, day.count > 0 ? 10 : 0)}%` as any }]}
                           />
                         </View>
@@ -205,13 +201,13 @@ export default function Stats() {
             <Animated.View entering={FadeInUp.delay(150)}>
               <View style={styles.completionCard}>
                 <View style={styles.completionHeader}>
-                  <Ionicons name="trophy-outline" size={20} color={colors.accent} />
+                  <Ionicons name="trophy-outline" size={20} color={colors.gold} />
                   <Text style={styles.completionTitle}>{wt.completionRate}</Text>
                   <Text style={styles.completionPct}>{stats?.completionRate || 0}%</Text>
                 </View>
                 <View style={styles.completionBarBg}>
                   <LinearGradient
-                    colors={[colors.primary, '#1565C0']}
+                    colors={[colors.emeraldMid, colors.gold]}
                     style={[styles.completionBarFill, { width: `${stats?.completionRate || 0}%` as any }]}
                     start={{ x: 0, y: 0 }}
                     end={{ x: 1, y: 0 }}
@@ -238,7 +234,7 @@ export default function Stats() {
                         <Ionicons
                           name={done ? 'checkmark' : 'ellipse-outline'}
                           size={14}
-                          color={done ? colors.white : colors.textTertiary}
+                          color={done ? colors.backgroundCard : colors.textTertiary}
                         />
                         <Text style={[styles.prayerDotLabel, done && styles.prayerDotLabelDone]}>
                           {label}
@@ -253,7 +249,7 @@ export default function Stats() {
             {/* Adhkar stats */}
             <Animated.View entering={FadeInUp.delay(250)}>
               <View style={styles.adhkarStatCard}>
-                <Ionicons name="book-outline" size={20} color={colors.primary} />
+                <Ionicons name="book-outline" size={20} color={colors.gold} />
                 <View style={{ flex: 1 }}>
                   <Text style={styles.adhkarStatTitle}>{st.adhkar}</Text>
                   <Text style={styles.adhkarStatValue}>
@@ -268,14 +264,14 @@ export default function Stats() {
 
         <View style={{ height: spacing.xxxxl }} />
       </ScrollView>
-    </Container>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    padding: 0,
-    backgroundColor: colors.backgroundSecondary,
+  screen: {
+    flex: 1,
+    backgroundColor: colors.background,
   },
   header: {
     flexDirection: 'row',
@@ -283,6 +279,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.md,
+    paddingTop: 50,
   },
   headerTitle: {
     ...typography.h3,
@@ -309,24 +306,28 @@ const styles = StyleSheet.create({
     borderRadius: borderRadius.xl,
     alignItems: 'center',
     gap: spacing.xs,
+    borderWidth: 1,
+    borderColor: colors.borderGold,
     ...shadows.md,
   },
   summaryValue: {
     ...typography.h1,
-    color: colors.white,
+    color: colors.text,
     fontWeight: '800',
     fontSize: 28,
   },
   summaryLabel: {
     ...typography.caption,
-    color: 'rgba(255,255,255,0.85)',
+    color: colors.textSecondary,
     textAlign: 'center',
     fontWeight: '600',
   },
   chartCard: {
-    backgroundColor: colors.white,
+    backgroundColor: colors.backgroundCard,
     borderRadius: borderRadius.xl,
     padding: spacing.lg,
+    borderWidth: 1,
+    borderColor: colors.border,
     ...shadows.sm,
   },
   chartHeader: {
@@ -378,7 +379,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   barLabelToday: {
-    color: colors.primary,
+    color: colors.gold,
     fontWeight: '800',
   },
   scaleRow: {
@@ -392,9 +393,11 @@ const styles = StyleSheet.create({
     color: colors.textTertiary,
   },
   completionCard: {
-    backgroundColor: colors.white,
+    backgroundColor: colors.backgroundCard,
     borderRadius: borderRadius.xl,
     padding: spacing.lg,
+    borderWidth: 1,
+    borderColor: colors.border,
     ...shadows.sm,
   },
   completionHeader: {
@@ -411,7 +414,7 @@ const styles = StyleSheet.create({
   },
   completionPct: {
     ...typography.h3,
-    color: colors.primary,
+    color: colors.gold,
     fontWeight: '800',
   },
   completionBarBg: {
@@ -426,9 +429,11 @@ const styles = StyleSheet.create({
     minWidth: 8,
   },
   breakdownCard: {
-    backgroundColor: colors.white,
+    backgroundColor: colors.backgroundCard,
     borderRadius: borderRadius.xl,
     padding: spacing.lg,
+    borderWidth: 1,
+    borderColor: colors.border,
     ...shadows.sm,
   },
   breakdownTitle: {
@@ -454,8 +459,8 @@ const styles = StyleSheet.create({
     backgroundColor: colors.backgroundSecondary,
   },
   prayerDotDone: {
-    backgroundColor: colors.primary,
-    borderColor: colors.primary,
+    backgroundColor: colors.gold,
+    borderColor: colors.gold,
   },
   prayerDotLabel: {
     ...typography.caption,
@@ -463,15 +468,18 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   prayerDotLabelDone: {
-    color: colors.white,
+    color: colors.backgroundCard,
+    fontWeight: '700',
   },
   adhkarStatCard: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.md,
-    backgroundColor: colors.white,
+    backgroundColor: colors.backgroundCard,
     borderRadius: borderRadius.xl,
     padding: spacing.lg,
+    borderWidth: 1,
+    borderColor: colors.border,
     ...shadows.sm,
   },
   adhkarStatTitle: {

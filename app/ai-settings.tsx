@@ -28,13 +28,13 @@ import {
 
 function Header({ onBack, t }: { onBack: () => void; t: Record<string, string> }) {
   return (
-    <LinearGradient colors={[colors.primary, '#064E3B']} style={styles.header}>
+    <LinearGradient colors={[colors.emeraldRich, colors.emeraldDeep]} style={styles.header}>
       <Pressable onPress={onBack} style={styles.backBtn} hitSlop={12}>
         <Ionicons name="chevron-back" size={24} color={colors.white} />
       </Pressable>
       <View style={styles.headerContent}>
         <View style={styles.headerIconBg}>
-          <Ionicons name="hardware-chip-outline" size={28} color={colors.white} />
+          <Ionicons name="hardware-chip-outline" size={28} color={colors.gold} />
         </View>
         <Text style={styles.headerTitle}>{t.aiSettings}</Text>
         <Text style={styles.headerSubtitle}>{t.aiProvider}</Text>
@@ -51,7 +51,7 @@ function StatusBadge({ configured, t }: { configured: boolean; t: Record<string,
       <Ionicons
         name={configured ? 'checkmark-circle' : 'alert-circle-outline'}
         size={16}
-        color={configured ? colors.success : colors.accent}
+        color={configured ? colors.success : colors.gold}
       />
       <Text style={[styles.statusText, configured ? styles.statusTextOk : styles.statusTextWarn]}>
         {configured ? t.aiConfigured : t.aiNotConfigured}
@@ -108,7 +108,7 @@ function ProviderCard({
             <Text style={styles.providerName}>{provider.name}</Text>
             {isActive && (
               <View style={styles.activePill}>
-                <Ionicons name="checkmark-circle" size={12} color={colors.white} />
+                <Ionicons name="checkmark-circle" size={12} color={colors.backgroundCard} />
                 <Text style={styles.activePillText}>Active</Text>
               </View>
             )}
@@ -149,7 +149,7 @@ function ProviderCard({
                   style={[styles.modelChip, isSelected && styles.modelChipActive]}
                 >
                   {isSelected && (
-                    <Ionicons name="checkmark-circle" size={14} color={colors.white} />
+                    <Ionicons name="checkmark-circle" size={14} color={colors.backgroundCard} />
                   )}
                   <View>
                     <Text
@@ -232,7 +232,6 @@ export default function AISettingsScreen() {
     isConfigured,
   } = useAISettings();
 
-  // Local state so user can tap around before committing
   const [expandedProvider, setExpandedProvider] = useState<AIProvider | null>(
     activeProvider ?? null
   );
@@ -279,6 +278,18 @@ export default function AISettingsScreen() {
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
+        {/* Info Banner */}
+        <Animated.View entering={FadeInUp.delay(30)} style={styles.infoBanner}>
+          <Ionicons name="information-circle-outline" size={18} color={colors.gold} />
+          <Text style={styles.infoText}>
+            {language === 'ru'
+              ? 'Без API ключа сканер использует Gemini AI по умолчанию'
+              : language === 'ar'
+              ? 'بدون مفتاح API، يستخدم الماسح Gemini AI افتراضيًا'
+              : 'Without API key, scanner uses Gemini AI by default'}
+          </Text>
+        </Animated.View>
+
         {/* Status */}
         <Animated.View entering={FadeInUp.delay(50)} style={styles.statusRow}>
           <StatusBadge configured={configured} t={t} />
@@ -331,7 +342,7 @@ export default function AISettingsScreen() {
             <Ionicons
               name={saved ? 'checkmark-circle' : 'save-outline'}
               size={22}
-              color={colors.white}
+              color={colors.backgroundCard}
             />
             <Text style={styles.saveBtnText}>{saved ? t.success ?? 'Saved!' : t.saveApiSettings}</Text>
           </Pressable>
@@ -348,7 +359,7 @@ export default function AISettingsScreen() {
 const styles = StyleSheet.create({
   screen: {
     flex: 1,
-    backgroundColor: colors.backgroundSecondary,
+    backgroundColor: colors.background,
   },
 
   // Header
@@ -374,10 +385,12 @@ const styles = StyleSheet.create({
     width: 60,
     height: 60,
     borderRadius: 30,
-    backgroundColor: 'rgba(255,255,255,0.2)',
+    backgroundColor: 'rgba(201,168,76,0.15)',
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: spacing.xs,
+    borderWidth: 1,
+    borderColor: colors.borderGold,
   },
   headerTitle: {
     ...typography.h2,
@@ -386,7 +399,26 @@ const styles = StyleSheet.create({
   },
   headerSubtitle: {
     ...typography.caption,
-    color: 'rgba(255,255,255,0.7)',
+    color: 'rgba(255,255,255,0.6)',
+  },
+
+  // Info banner
+  infoBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    backgroundColor: 'rgba(201,168,76,0.1)',
+    borderWidth: 1,
+    borderColor: colors.borderGold,
+    borderRadius: borderRadius.lg,
+    padding: spacing.md,
+    marginBottom: spacing.sm,
+  },
+  infoText: {
+    ...typography.small,
+    color: colors.textSecondary,
+    flex: 1,
+    lineHeight: 18,
   },
 
   // Scroll
@@ -410,20 +442,20 @@ const styles = StyleSheet.create({
     ...shadows.sm,
   },
   statusBadgeOk: {
-    backgroundColor: colors.successTint,
+    backgroundColor: 'rgba(5,150,105,0.15)',
     borderWidth: 1,
     borderColor: colors.success,
   },
   statusBadgeWarn: {
-    backgroundColor: colors.accentTint,
+    backgroundColor: 'rgba(201,168,76,0.12)',
     borderWidth: 1,
-    borderColor: colors.accent,
+    borderColor: colors.gold,
   },
   statusText: {
     ...typography.captionBold,
   },
-  statusTextOk: { color: colors.successDark },
-  statusTextWarn: { color: colors.accentDark },
+  statusTextOk: { color: colors.success },
+  statusTextWarn: { color: colors.gold },
 
   // Section label
   sectionLabel: {
@@ -437,10 +469,12 @@ const styles = StyleSheet.create({
 
   // Provider card
   providerCard: {
-    backgroundColor: colors.white,
+    backgroundColor: colors.backgroundCard,
     borderRadius: borderRadius.xl,
     marginBottom: spacing.sm,
     overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: colors.border,
     ...shadows.sm,
   },
   providerHeader: {
@@ -476,7 +510,7 @@ const styles = StyleSheet.create({
   },
   activeModelLabel: {
     ...typography.small,
-    color: colors.primary,
+    color: colors.gold,
     fontWeight: '600',
     marginTop: 2,
   },
@@ -484,14 +518,14 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 3,
-    backgroundColor: colors.primary,
+    backgroundColor: colors.gold,
     paddingHorizontal: 7,
     paddingVertical: 2,
     borderRadius: borderRadius.full,
   },
   activePillText: {
     ...typography.tiny,
-    color: colors.white,
+    color: colors.backgroundCard,
     fontWeight: '700',
   },
 
@@ -502,92 +536,90 @@ const styles = StyleSheet.create({
   },
   divider: {
     height: 1,
-    backgroundColor: colors.borderLight,
+    backgroundColor: colors.border,
     marginBottom: spacing.md,
   },
   subLabel: {
-    ...typography.smallBold,
+    ...typography.captionBold,
     color: colors.textSecondary,
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
     marginBottom: spacing.sm,
   },
-
-  // Model grid
   modelGrid: {
-    gap: spacing.sm,
+    gap: spacing.xs,
   },
   modelChip: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.sm,
+    paddingHorizontal: spacing.sm,
     paddingVertical: spacing.sm,
-    paddingHorizontal: spacing.md,
     borderRadius: borderRadius.lg,
-    borderWidth: 1.5,
+    borderWidth: 1,
     borderColor: colors.border,
     backgroundColor: colors.backgroundSecondary,
   },
   modelChipActive: {
-    borderColor: colors.primary,
-    backgroundColor: colors.primary,
+    backgroundColor: colors.gold,
+    borderColor: colors.gold,
   },
   modelChipName: {
     ...typography.captionBold,
     color: colors.text,
   },
   modelChipNameActive: {
-    color: colors.white,
+    color: colors.backgroundCard,
   },
   modelChipDesc: {
     ...typography.tiny,
     color: colors.textTertiary,
   },
   modelChipDescActive: {
-    color: 'rgba(255,255,255,0.75)',
+    color: 'rgba(17,24,39,0.7)',
   },
 
-  // Inputs
+  // Input
   inputRow: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: colors.backgroundSecondary,
     borderRadius: borderRadius.lg,
-    borderWidth: 1.5,
+    borderWidth: 1,
     borderColor: colors.border,
     overflow: 'hidden',
   },
   textInput: {
     flex: 1,
-    paddingVertical: spacing.md,
     paddingHorizontal: spacing.md,
-    ...typography.body,
+    paddingVertical: spacing.sm,
     color: colors.text,
+    ...typography.caption,
   },
   textInputFull: {
     backgroundColor: colors.backgroundSecondary,
     borderRadius: borderRadius.lg,
-    borderWidth: 1.5,
+    borderWidth: 1,
     borderColor: colors.border,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    color: colors.text,
+    ...typography.caption,
   },
   eyeBtn: {
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.md,
+    padding: spacing.sm,
   },
 
   // Save
   saveContainer: {
     marginTop: spacing.lg,
-    marginBottom: spacing.md,
   },
   saveBtn: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: spacing.sm,
-    backgroundColor: colors.primary,
+    backgroundColor: colors.gold,
     borderRadius: borderRadius.xl,
-    paddingVertical: spacing.md + 2,
+    paddingVertical: spacing.md,
     ...shadows.md,
   },
   saveBtnSuccess: {
@@ -595,6 +627,6 @@ const styles = StyleSheet.create({
   },
   saveBtnText: {
     ...typography.bodyBold,
-    color: colors.white,
+    color: colors.backgroundCard,
   },
 });
