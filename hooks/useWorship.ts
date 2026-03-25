@@ -1,9 +1,26 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { supabase, PrayerLog, AdhkarProgress } from '@/lib/supabase';
 import { useProfile } from './useProfile';
 import { DateTime } from 'luxon';
+import { blink } from '@/lib/blink';
 
-export type { PrayerLog };
+export interface PrayerLog {
+  id: string;
+  userId: string;
+  prayerName: string;
+  date: string;
+  status: string;
+  createdAt: string;
+}
+
+export interface AdhkarProgress {
+  id: string;
+  userId: string;
+  dhikrId: string;
+  date: string;
+  count: number;
+  completed: number;
+  createdAt: string;
+}
 
 export const useWorship = () => {
   const queryClient = useQueryClient();
@@ -15,14 +32,11 @@ export const useWorship = () => {
     queryFn: async (): Promise<PrayerLog[]> => {
       if (!user) return [];
 
-      const { data, error } = await supabase
-        .from('prayer_logs')
-        .select('*')
-        .eq('user_id', user.id)
-        .eq('date', today);
+      const results = await blink.db.prayerLogs.list({
+        where: { userId: user.id, date: today },
+      });
 
-      if (error) throw error;
-      return (data || []) as PrayerLog[];
+      return results as PrayerLog[];
     },
     enabled: !!user,
   });
@@ -32,14 +46,11 @@ export const useWorship = () => {
     queryFn: async (): Promise<AdhkarProgress[]> => {
       if (!user) return [];
 
-      const { data, error } = await supabase
-        .from('adhkar_progress')
-        .select('*')
-        .eq('user_id', user.id)
-        .eq('date', today);
+      const results = await blink.db.adhkarProgress.list({
+        where: { userId: user.id, date: today },
+      });
 
-      if (error) throw error;
-      return (data || []) as AdhkarProgress[];
+      return results as AdhkarProgress[];
     },
     enabled: !!user,
   });
@@ -48,26 +59,20 @@ export const useWorship = () => {
     mutationFn: async (prayerName: string) => {
       if (!user) throw new Error('No user');
 
-      const existing = prayerLogs?.find(l => l.prayer_name === prayerName);
+      const existing = prayerLogs?.find(l => l.prayerName === prayerName);
 
       if (existing) {
         // Toggle off: delete the log
-        const { error } = await supabase
-          .from('prayer_logs')
-          .delete()
-          .eq('id', existing.id);
-        if (error) throw error;
+        await blink.db.prayerLogs.delete(existing.id);
       } else {
         // Log as completed
-        const { error } = await supabase
-          .from('prayer_logs')
-          .insert({
-            user_id: user.id,
-            prayer_name: prayerName,
-            date: today,
-            status: 'completed',
-          });
-        if (error) throw error;
+        await blink.db.prayerLogs.create({
+          userId: user.id,
+          prayerName,
+          date: today,
+          status: 'completed',
+          createdAt: new Date().toISOString(),
+        });
       }
     },
     onSuccess: () => {
@@ -79,25 +84,22 @@ export const useWorship = () => {
     mutationFn: async ({ dhikrId, count }: { dhikrId: string; count: number }) => {
       if (!user) throw new Error('No user');
 
-      const existing = adhkarProgress?.find(p => p.dhikr_id === dhikrId);
+      const existing = adhkarProgress?.find(p => p.dhikrId === dhikrId);
 
       if (existing) {
-        const { error } = await supabase
-          .from('adhkar_progress')
-          .update({ count, completed: true })
-          .eq('id', existing.id);
-        if (error) throw error;
+        await blink.db.adhkarProgress.update(existing.id, {
+          count,
+          completed: 1,
+        });
       } else {
-        const { error } = await supabase
-          .from('adhkar_progress')
-          .insert({
-            user_id: user.id,
-            dhikr_id: dhikrId,
-            date: today,
-            count,
-            completed: true,
-          });
-        if (error) throw error;
+        await blink.db.adhkarProgress.create({
+          userId: user.id,
+          dhikrId,
+          date: today,
+          count,
+          completed: 1,
+          createdAt: new Date().toISOString(),
+        });
       }
     },
     onSuccess: () => {

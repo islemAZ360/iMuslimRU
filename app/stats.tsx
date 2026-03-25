@@ -7,7 +7,7 @@ import { translations } from '@/constants/translations';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useQuery } from '@tanstack/react-query';
-import { supabase } from '@/lib/supabase';
+import { blink } from '@/lib/blink';
 import { useProfile } from '@/hooks/useProfile';
 import { DateTime } from 'luxon';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -34,12 +34,7 @@ export default function Stats() {
     queryKey: ['prayerLogsAll', user?.id],
     queryFn: async () => {
       if (!user) return [];
-      const { data, error } = await supabase
-        .from('prayer_logs')
-        .select('*')
-        .eq('user_id', user.id);
-      if (error) throw error;
-      return data || [];
+      return await blink.db.prayerLogs.list({ where: { userId: user.id } });
     },
     enabled: !!user,
   });
@@ -48,12 +43,7 @@ export default function Stats() {
     queryKey: ['adhkarProgressAll', user?.id],
     queryFn: async () => {
       if (!user) return [];
-      const { data, error } = await supabase
-        .from('adhkar_progress')
-        .select('*')
-        .eq('user_id', user.id);
-      if (error) throw error;
-      return data || [];
+      return await blink.db.adhkarProgress.list({ where: { userId: user.id } });
     },
     enabled: !!user,
   });
@@ -62,12 +52,7 @@ export default function Stats() {
     queryKey: ['fastingAll', user?.id],
     queryFn: async () => {
       if (!user) return [];
-      const { data, error } = await supabase
-        .from('fasting_days')
-        .select('*')
-        .eq('user_id', user.id);
-      if (error) throw error;
-      return data || [];
+      return await blink.db.fastingDays.list({ where: { userId: user.id } });
     },
     enabled: !!user,
   });
@@ -76,12 +61,7 @@ export default function Stats() {
     queryKey: ['scanLogsAll', user?.id],
     queryFn: async () => {
       if (!user) return [];
-      const { data, error } = await supabase
-        .from('halal_scans')
-        .select('*')
-        .eq('user_id', user.id);
-      if (error) throw error;
-      return data || [];
+      return await blink.db.halalScans.list({ where: { userId: user.id } });
     },
     enabled: !!user,
   });
@@ -249,7 +229,7 @@ export default function Stats() {
                 <View style={styles.prayerGrid}>
                   {PRAYER_NAMES.map(pName => {
                     const done = prayerLogs?.some(
-                      (l: any) => l.prayer_name === pName && l.date === today.toFormat('yyyy-MM-dd')
+                      (l: any) => l.prayerName === pName && l.date === today.toFormat('yyyy-MM-dd')
                     );
                     const prayerT = t.home.prayers;
                     const label = prayerT[pName.toLowerCase() as keyof typeof prayerT] || pName;

@@ -7,7 +7,6 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { colors, spacing, typography, shadows, borderRadius } from '@/constants/design';
 import { useLanguageStore } from '@/hooks/useLanguage';
 import { useQuery, useMutation } from '@tanstack/react-query';
-import { supabase } from '@/lib/supabase';
 import { useWorship } from '@/hooks/useWorship';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
@@ -43,33 +42,7 @@ export default function AdhkarDetail() {
 
   const { data: adhkar = [], isLoading } = useQuery<LocalAdhkar[]>({
     queryKey: ['adhkar', id],
-    queryFn: async () => {
-      try {
-        const { data, error } = await supabase
-          .from('adhkar')
-          .select('*')
-          .eq('category_id', id as string)
-          .order('sort_order', { ascending: true });
-
-        if (error || !data || data.length === 0) {
-          return getAdhkarByCategory(id as string);
-        }
-
-        return data.map((item: any) => ({
-          id: item.id,
-          categoryId: item.category_id,
-          textAr: item.text_ar,
-          textRu: item.text_ru,
-          textEn: item.text_en,
-          transliteration: item.transliteration,
-          source: item.source,
-          targetCount: item.target_count,
-          sortOrder: item.sort_order,
-        }));
-      } catch {
-        return getAdhkarByCategory(id as string);
-      }
-    },
+    queryFn: async () => getAdhkarByCategory(id as string),
   });
 
   const progressMutation = useMutation({

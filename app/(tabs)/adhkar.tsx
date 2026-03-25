@@ -6,7 +6,6 @@ import { colors, spacing, typography, shadows, borderRadius } from '@/constants/
 import { useLanguageStore } from '@/hooks/useLanguage';
 import { translations } from '@/constants/translations';
 import { useQuery } from '@tanstack/react-query';
-import { supabase } from '@/lib/supabase';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { DateTime } from 'luxon';
@@ -50,50 +49,7 @@ export default function Adhkar() {
   // Fetch from Supabase; fall back to local data if empty
   const { data: categories = [] } = useQuery<EnrichedCategory[]>({
     queryKey: ['adhkar_categories'],
-    queryFn: async () => {
-      try {
-        const { data: cats, error } = await supabase
-          .from('adhkar_categories')
-          .select('*')
-          .order('sort_order', { ascending: true });
-
-        if (error || !cats || cats.length === 0) {
-          // ── Fallback: local data ──
-          return getEnrichedCategories() as EnrichedCategory[];
-        }
-
-        const counts = await Promise.all(
-          cats.map(async (cat) => {
-            const { count } = await supabase
-              .from('adhkar')
-              .select('*', { count: 'exact', head: true })
-              .eq('category_id', cat.id);
-            return { id: cat.id, count: count || 0 };
-          })
-        );
-
-        const remoteData: EnrichedCategory[] = cats.map(cat => ({
-          id: cat.id,
-          nameRu: cat.name_ru,
-          nameAr: cat.name_ar,
-          nameEn: cat.name_en,
-          icon: cat.icon || 'star-outline',
-          sortOrder: cat.sort_order,
-          count: counts.find(c => c.id === cat.id)?.count || 0,
-        }));
-
-        // If server returns categories but adhkar counts are 0, augment with local counts
-        return remoteData.map(cat => {
-          if (cat.count === 0) {
-            const localCount = getAdhkarByCategory(cat.id).length;
-            return { ...cat, count: localCount };
-          }
-          return cat;
-        });
-      } catch {
-        return getEnrichedCategories() as EnrichedCategory[];
-      }
-    },
+    queryFn: async () => getEnrichedCategories() as EnrichedCategory[],
   });
 
   const getCategoryName = (item: EnrichedCategory) => {

@@ -222,7 +222,7 @@ export default function Home() {
               {/* Prayer progress dots */}
               <View style={styles.progressDots}>
                 {Object.keys(prayerData.times).map(name => {
-                  const isCompleted = prayerLogs?.some(l => l.prayer_name === name);
+                  const isCompleted = prayerLogs?.some(l => l.prayerName === name);
                   const isNext = prayerData.nextPrayer.name === name;
                   return (
                     <View
@@ -256,7 +256,7 @@ export default function Home() {
           {prayerData ? (
             <View style={styles.prayerList}>
               {Object.entries(prayerData.times).map(([name, time], idx) => {
-                const isCompleted = prayerLogs?.some(l => l.prayer_name === name);
+                const isCompleted = prayerLogs?.some(l => l.prayerName === name);
                 const isNext = prayerData.nextPrayer.name === name;
                 const gc = PRAYER_COLORS[name] ?? ['#022C22', '#065F46'];
                 const iconName = PRAYER_ICONS[name] ?? 'time-outline';

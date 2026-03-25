@@ -17,7 +17,7 @@ import { useLanguageStore } from '@/hooks/useLanguage';
 import { translations } from '@/constants/translations';
 import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
-import { supabase } from '@/lib/supabase';
+
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useProfile } from '@/hooks/useProfile';
 import { useAISettings, getProviderInfo } from '@/hooks/useAISettings';
@@ -57,14 +57,11 @@ export default function Scanner() {
     queryKey: ['scanHistory', user?.id],
     queryFn: async () => {
       if (!user) return [];
-      const { data, error } = await supabase
-        .from('halal_scans')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false })
-        .limit(20);
-      if (error) throw error;
-      return data || [];
+      return await blink.db.halalScans.list({
+        where: { userId: user.id },
+        orderBy: { createdAt: 'desc' },
+        limit: 20,
+      });
     },
     enabled: !!user,
   });
@@ -182,14 +179,15 @@ export default function Scanner() {
       setResult(scanData);
 
       const userId = user?.id || 'guest_user';
-      await supabase.from('halal_scans').insert({
-        user_id: userId,
-        image_url: publicUrl,
-        product_name: scanData.productName,
+      await blink.db.halalScans.create({
+        userId,
+        imageUrl: publicUrl,
+        productName: scanData.productName,
         result: scanData.status,
         reason: scanData.reason,
         ingredients: JSON.stringify(scanData.ingredients),
         confidence: scanData.confidence,
+        createdAt: new Date().toISOString(),
       });
 
       queryClient.invalidateQueries({ queryKey: ['scanHistory', user?.id] });
@@ -261,10 +259,10 @@ export default function Scanner() {
                   </LinearGradient>
                   <View style={styles.historyContent}>
                     <Text style={styles.historyProductName} numberOfLines={1}>
-                      {scan.product_name || '—'}
+                      {scan.productName || '—'}
                     </Text>
                     <Text style={styles.historyDate}>
-                      {DateTime.fromISO(scan.created_at).toFormat('dd/MM/yyyy HH:mm')}
+                      {DateTime.fromISO(scan.createdAt).toFormat('dd/MM/yyyy HH:mm')}
                     </Text>
                   </View>
                   <View style={[styles.historyBadge, { backgroundColor: getStatusColor(scan.result) + '18' }]}>

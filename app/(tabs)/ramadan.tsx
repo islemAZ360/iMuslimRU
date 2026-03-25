@@ -10,7 +10,7 @@ import * as Location from 'expo-location';
 import { Coordinates, CalculationMethod, PrayerTimes } from 'adhan';
 import { DateTime } from 'luxon';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { supabase } from '@/lib/supabase';
+import { blink } from '@/lib/blink';
 import { useProfile } from '@/hooks/useProfile';
 import Animated, { FadeInUp } from 'react-native-reanimated';
 
@@ -103,33 +103,21 @@ export default function Ramadan() {
     queryKey: ['fastingDays', user?.id],
     queryFn: async () => {
       if (!user) return [];
-      const { data, error } = await supabase
-        .from('fasting_days')
-        .select('*')
-        .eq('user_id', user.id);
-      if (error) throw error;
-      return data || [];
+      return await blink.db.fastingDays.list({ where: { userId: user.id } });
     },
     enabled: !!user,
   });
 
   const todayFasted = fastingLogs?.find((f: any) => f.date === today);
-  const fastingCount = fastingLogs?.filter((f: any) => f.fasted === true).length || 0;
+  const fastingCount = fastingLogs?.filter((f: any) => Number(f.fasted) > 0).length || 0;
 
   const toggleFasting = useMutation({
     mutationFn: async (fasted: boolean) => {
       if (!user) throw new Error('No user');
       if (todayFasted) {
-        const { error } = await supabase
-          .from('fasting_days')
-          .update({ fasted })
-          .eq('id', (todayFasted as any).id);
-        if (error) throw error;
+        await blink.db.fastingDays.update((todayFasted as any).id, { fasted: fasted ? 1 : 0 });
       } else {
-        const { error } = await supabase
-          .from('fasting_days')
-          .insert({ user_id: user.id, date: today, fasted });
-        if (error) throw error;
+        await blink.db.fastingDays.create({ userId: user.id, date: today, fasted: fasted ? 1 : 0, createdAt: new Date().toISOString() });
       }
     },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['fastingDays', user?.id] }),
